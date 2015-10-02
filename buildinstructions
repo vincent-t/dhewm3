@@ -1,0 +1,4 @@
+deps:
+sudo apt-get install cmake libogg-dev libvorbis-dev libopenal-dev libsdl2-dev 
+build:
+mkdir build && cd build && cmake ../neo && make

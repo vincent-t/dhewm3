@@ -27,6 +27,7 @@ include(GNUInstallDirs OPTIONAL RESULT_VARIABLE GNUINSTALLDIRS)
 option(CORE			"Build the core" ON)
 option(BASE			"Build the base game code" ON)
 option(D3XP			"Build the d3xp game code" ON)
+option(MODS			"Build game code for additional mods" OFF)
 option(DEDICATED	"Build the dedicated server" OFF)
 option(ONATIVE		"Optimize for the host CPU" OFF)
 option(SDL2			"Use SDL2 instead of SDL1.2" ON)
@@ -81,11 +82,13 @@ endif()
 find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-find_package(JPEG REQUIRED)
-include_directories(${JPEG_INCLUDE_DIR})
+#find_package(JPEG REQUIRED)
+#include_directories(${JPEG_INCLUDE_DIR})
+include_directories("libs/jpeg")
 
-set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
-set(CMAKE_REQUIRED_LIBRARIES ${JPEG_LIBRARY})
+#set(CMAKE_REQUIRED_INCLUDES ${JPEG_INCLUDE_DIR})
+#set(CMAKE_REQUIRED_LIBRARIES ${JPEG_LIBRARY})
+
 
 find_package(OGG REQUIRED)
 include_directories(${OGG_INCLUDE_DIR})
@@ -277,6 +280,55 @@ if(NOT APPLE AND NOT WIN32)
 	message(STATUS "  Data directory:    ${datadir}")
 endif()
 
+set(src_jpeg
+	libs/jpeg/jaricom.cpp
+	libs/jpeg/jcapimin.cpp
+	libs/jpeg/jcapistd.cpp
+	libs/jpeg/jcarith.cpp
+	libs/jpeg/jccoefct.cpp
+	libs/jpeg/jccolor.cpp
+	libs/jpeg/jcdctmgr.cpp
+	libs/jpeg/jchuff.cpp
+	libs/jpeg/jcinit.cpp
+	libs/jpeg/jcmainct.cpp
+	libs/jpeg/jcmarker.cpp
+	libs/jpeg/jcmaster.cpp
+	libs/jpeg/jcomapi.cpp
+	libs/jpeg/jcparam.cpp
+	libs/jpeg/jcprepct.cpp
+	libs/jpeg/jcsample.cpp
+	libs/jpeg/jctrans.cpp
+	libs/jpeg/jdapimin.cpp
+	libs/jpeg/jdapistd.cpp
+	libs/jpeg/jdarith.cpp
+	libs/jpeg/jdatadst.cpp
+	libs/jpeg/jdatasrc.cpp
+	libs/jpeg/jdcoefct.cpp
+	libs/jpeg/jdcolor.cpp
+	libs/jpeg/jddctmgr.cpp
+	libs/jpeg/jdhuff.cpp
+	libs/jpeg/jdinput.cpp
+	libs/jpeg/jdmainct.cpp
+	libs/jpeg/jdmarker.cpp
+	libs/jpeg/jdmaster.cpp
+	libs/jpeg/jdmerge.cpp
+	libs/jpeg/jdpostct.cpp
+	libs/jpeg/jdsample.cpp
+	libs/jpeg/jdtrans.cpp
+	libs/jpeg/jerror.cpp
+	libs/jpeg/jfdctflt.cpp
+	libs/jpeg/jfdctfst.cpp
+	libs/jpeg/jfdctint.cpp
+	libs/jpeg/jidctflt.cpp
+	libs/jpeg/jidctfst.cpp
+	libs/jpeg/jidctint.cpp
+	libs/jpeg/jmemmgr.cpp
+	libs/jpeg/jmemnobs.cpp
+	libs/jpeg/jquant1.cpp
+	libs/jpeg/jquant2.cpp
+	libs/jpeg/jutils.cpp
+)
+
 set(src_renderer
 	renderer/Cinematic.cpp
 	renderer/GuiModel.cpp
@@ -326,8 +378,8 @@ set(src_renderer
 	renderer/tr_stencilshadow.cpp
 	renderer/tr_subview.cpp
 	renderer/tr_trace.cpp
-	renderer/tr_trisurf.cpp
 	renderer/tr_turboshadow.cpp
+	renderer/tr_trisurf.cpp
 )
 
 set(src_framework
@@ -733,6 +785,11 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MINGW
 	set_target_properties(idlib PROPERTIES COMPILE_FLAGS "-fPIC")
 endif()
 
+add_library(jpeg STATIC ${src_jpeg})
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MINGW)
+	set_target_properties(jpeg PROPERTIES COMPILE_FLAGS "-fPIC")
+endif()
+
 if(CORE)
 	add_executable(dhewm3 WIN32 MACOSX_BUNDLE
 		${src_core}
@@ -751,7 +808,8 @@ if(CORE)
 		${VORBISFILE_LIBRARIES}
 		${VORBIS_LIBRARIES}
 		${CURL_LIBRARY}
-		${JPEG_LIBRARY}
+		#${JPEG_LIBRARY}
+		jpeg
 		${ZLIB_LIBRARY}
 		${SDLx_LIBRARY}
 		${sys_libs}
@@ -781,7 +839,8 @@ if(DEDICATED)
 		${VORBISFILE_LIBRARIES}
 		${VORBIS_LIBRARIES}
 		${CURL_LIBRARY}
-		${JPEG_LIBRARY}
+		#${JPEG_LIBRARY}
+		jpeg
 		${ZLIB_LIBRARY}
 		${SDLx_LIBRARY}
 		${sys_libs}
@@ -830,4 +889,8 @@ if(D3XP)
 				ARCHIVE DESTINATION "${libdir}"
 		)
 	endif()
+endif()
+
+if (MODS)
+	add_subdirectory(mods)
 endif()
