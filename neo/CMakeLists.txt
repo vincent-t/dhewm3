@@ -595,7 +595,6 @@ set(src_game
 	game/ai/AI.cpp
 	game/ai/AI_events.cpp
 	game/ai/AI_pathing.cpp
-	game/ai/AI_Vagary.cpp
 	game/gamesys/DebugGraph.cpp
 	game/gamesys/Class.cpp
 	game/gamesys/Event.cpp
@@ -667,7 +666,6 @@ set(src_d3xp
 	d3xp/ai/AI.cpp
 	d3xp/ai/AI_events.cpp
 	d3xp/ai/AI_pathing.cpp
-	d3xp/ai/AI_Vagary.cpp
 	d3xp/gamesys/DebugGraph.cpp
 	d3xp/gamesys/Class.cpp
 	d3xp/gamesys/Event.cpp
