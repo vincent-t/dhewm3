@@ -2713,36 +2713,6 @@ void idAI::Event_GetReachableEntityPosition( idEntity *ent ) {
 
 /*
 ================
-idAI::Event_GetReachableEntityPosition
-================
-*/
-void idAI::Event_GetReachableEntityPosition( idEntity *ent ) {
-	int		toAreaNum;
-	idVec3	pos;
-
-	if ( move.moveType != MOVETYPE_FLY ) {
-		if ( !ent->GetFloorPos( 64.0f, pos ) ) {
-			// NOTE: not a good way to return 'false'
-			return idThread::ReturnVector( vec3_zero );
-		}
-		if ( ent->IsType( idActor::Type ) && static_cast<idActor *>( ent )->OnLadder() ) {
-			// NOTE: not a good way to return 'false'
-			return idThread::ReturnVector( vec3_zero );
-		}
-	} else {
-		pos = ent->GetPhysics()->GetOrigin();
-	}
-
-	if ( aas ) {
-		toAreaNum = PointReachableAreaNum( pos );
-		aas->PushPointIntoAreaNum( toAreaNum, pos );
-	}
-
-	idThread::ReturnVector( pos );
-}
-
-/*
-================
 idAI::Event_ChooseObjectToThrow
 ================
 */

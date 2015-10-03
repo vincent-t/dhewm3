@@ -49,7 +49,7 @@ If you have questions concerning this license or the applicable additional terms
 
 glconfig_t	glConfig;
 
-const char *r_rendererArgs[] = { "best", "arb2", NULL };
+const char *r_rendererArgs[] = { "best", "arb2", "glsl", NULL };
 
 idCVar r_inhibitFragmentProgram( "r_inhibitFragmentProgram", "0", CVAR_RENDERER | CVAR_BOOL, "ignore the fragment program extension" );
 idCVar r_useLightPortalFlow( "r_useLightPortalFlow", "1", CVAR_RENDERER | CVAR_BOOL, "use a more precise area reference determination" );
@@ -235,7 +235,10 @@ void (APIENTRY *qglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, 
 void (APIENTRY * qglColorTableEXT)( int, int, int, int, int, const void * );
 
 // EXT_stencil_two_side
-PFNGLACTIVESTENCILFACEEXTPROC			qglActiveStencilFaceEXT;
+//PFNGLACTIVESTENCILFACEEXTPROC			qglActiveStencilFaceEXT;
+// separate stencil
+void ( APIENTRY *qglStencilOpSeparate )( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass );
+void ( APIENTRY *qglStencilFuncSeparate ) ( GLenum face, GLenum func, GLint ref, GLuint mask );
 
 // ARB_texture_compression
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC		qglCompressedTexImage2DARB;
@@ -267,6 +270,50 @@ PFNGLPROGRAMLOCALPARAMETER4FVARBPROC	qglProgramLocalParameter4fvARB;
 // GL_EXT_depth_bounds_test
 PFNGLDEPTHBOUNDSEXTPROC                 qglDepthBoundsEXT;
 
+// GL_ARB_shading_language_100
+void ( APIENTRY * qglDeleteObjectARB )( GLhandleARB obj );
+GLhandleARB ( APIENTRY * qglGetHandleARB )( GLenum pname );
+void ( APIENTRY * qglDetachObjectARB )( GLhandleARB containerObj, GLhandleARB attachedObj );
+GLhandleARB ( APIENTRY * qglCreateShaderObjectARB )( GLenum shaderType );
+void ( APIENTRY * qglShaderSourceARB )( GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length ); void ( APIENTRY * qglCompileShaderARB )( GLhandleARB shaderObj );
+GLhandleARB ( APIENTRY * qglCreateProgramObjectARB )( void );
+void ( APIENTRY * qglAttachObjectARB )( GLhandleARB containerObj, GLhandleARB obj );
+void ( APIENTRY * qglLinkProgramARB )( GLhandleARB programObj );
+void ( APIENTRY * qglUseProgramObjectARB )( GLhandleARB programObj );
+void ( APIENTRY * qglValidateProgramARB )( GLhandleARB programObj );
+void ( APIENTRY * qglUniform1fARB )( GLint location, GLfloat v0 );
+void ( APIENTRY * qglUniform2fARB )( GLint location, GLfloat v0, GLfloat v1 );
+void ( APIENTRY * qglUniform3fARB )( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 );
+void ( APIENTRY * qglUniform4fARB )( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 );
+void ( APIENTRY * qglUniform1iARB )( GLint location, GLint v0 );
+void ( APIENTRY * qglUniform2iARB )( GLint location, GLint v0, GLint v1 );
+void ( APIENTRY * qglUniform3iARB )( GLint location, GLint v0, GLint v1, GLint v2 );
+void ( APIENTRY * qglUniform4iARB )( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 );
+void ( APIENTRY * qglUniform2fvARB )( GLint location, GLsizei count, const GLfloat *value );
+void ( APIENTRY * qglUniform3fvARB )( GLint location, GLsizei count, const GLfloat *value );
+void ( APIENTRY * qglUniform4fvARB )( GLint location, GLsizei count, const GLfloat *value );
+void ( APIENTRY * qglUniform2ivARB )( GLint location, GLsizei count, const GLint *value );
+void ( APIENTRY * qglUniform3ivARB )( GLint location, GLsizei count, const GLint *value );
+void ( APIENTRY * qglUniform4ivARB )( GLint location, GLsizei count, const GLint *value );
+void ( APIENTRY * qglUniformMatrix2fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
+void ( APIENTRY * qglUniformMatrix3fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
+void ( APIENTRY * qglUniformMatrix4fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
+void ( APIENTRY * qglGetObjectParameterfvARB )( GLhandleARB obj, GLenum pname, GLfloat *params );
+void ( APIENTRY * qglGetObjectParameterivARB )( GLhandleARB obj, GLenum pname, GLint *params );
+void ( APIENTRY * qglGetInfoLogARB )( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog );
+void ( APIENTRY * qglGetAttachedObjectsARB )( GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj );
+GLint ( APIENTRY * qglGetUniformLocationARB )( GLhandleARB programObj, const GLcharARB *name );
+void ( APIENTRY * qglGetActiveUniformARB )( GLhandleARB programObj, GLuint index, GLsizei maxIndex, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name );
+void ( APIENTRY * qglGetUniformfvARB )( GLhandleARB programObj, GLint location, GLfloat *params );
+void ( APIENTRY * qglGetUniformivARB )( GLhandleARB programObj, GLint location, GLint *params );
+void ( APIENTRY * qglGetShaderSourceARB )( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source );
+void ( APIENTRY * qglGetShaderiv )(GLuint shader, GLenum pname, GLint* param);
+void ( APIENTRY * qglDeleteShader )(GLuint shader);
+void ( APIENTRY * qglGetShaderInfoLog )(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
+void ( APIENTRY * qglBindAttribLocationARB )( GLhandleARB programObj, GLuint index, const GLcharARB *name );
+void ( APIENTRY * qglGetActiveAttribARB )( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name );
+GLint ( APIENTRY * qglGetAttribLocationARB )( GLhandleARB programObj, const GLcharARB *name );
+
 /*
 =================
 R_CheckExtension
@@ -285,7 +332,6 @@ bool R_CheckExtension( const char *name ) {
 /*
 ==================
 R_CheckPortableExtensions
-
 ==================
 */
 static void R_CheckPortableExtensions( void ) {
@@ -380,11 +426,20 @@ static void R_CheckPortableExtensions( void ) {
 		tr.stencilDecr = GL_DECR;
 	}
 
-	// GL_EXT_stencil_two_side
+	// separate stencil (part of OpenGL 2.0 spec)
+	qglStencilOpSeparate = (void ( APIENTRY * )( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass ))GLimp_ExtensionPointer( "glStencilOpSeparate" );
+    qglStencilFuncSeparate = (void ( APIENTRY * ) ( GLenum face, GLenum func, GLint ref, GLuint mask ))GLimp_ExtensionPointer( "glStencilFuncSeparate" );
+	if( qglStencilOpSeparate && qglStencilFuncSeparate ) {
+		glConfig.twoSidedStencilAvailable = true;
+	} else {
+		glConfig.twoSidedStencilAvailable = false;
+	}
+
+/*// GL_EXT_stencil_two_side
 	glConfig.twoSidedStencilAvailable = R_CheckExtension( "GL_EXT_stencil_two_side" );
 	if ( glConfig.twoSidedStencilAvailable )
 		qglActiveStencilFaceEXT = (PFNGLACTIVESTENCILFACEEXTPROC)GLimp_ExtensionPointer( "glActiveStencilFaceEXT" );
-
+*/
 	// ARB_vertex_buffer_object
 	glConfig.ARBVertexBufferObjectAvailable = R_CheckExtension( "GL_ARB_vertex_buffer_object" );
 	if(glConfig.ARBVertexBufferObjectAvailable) {
@@ -440,8 +495,55 @@ static void R_CheckPortableExtensions( void ) {
 		qglDepthBoundsEXT = (PFNGLDEPTHBOUNDSEXTPROC)GLimp_ExtensionPointer( "glDepthBoundsEXT" );
 	}
 
-}
+	// GL_ARB_shading_language_100
+	glConfig.GLSLAvailable = R_CheckExtension( "GL_ARB_shading_language_100" );
+	if (glConfig.GLSLAvailable) {
+		qglDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC)GLimp_ExtensionPointer( "glDeleteObjectARB" );
+		qglGetHandleARB = (PFNGLGETHANDLEARBPROC)GLimp_ExtensionPointer( "glGetHandleARB" );
+		qglDetachObjectARB = (PFNGLDETACHOBJECTARBPROC)GLimp_ExtensionPointer( "glDetachObjectARB" );
+		qglCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)GLimp_ExtensionPointer( "glCreateShaderObjectARB" );
+		qglShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)GLimp_ExtensionPointer( "glShaderSourceARB" );
+		qglCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)GLimp_ExtensionPointer( "glCompileShaderARB" );
+		qglCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC)GLimp_ExtensionPointer( "glCreateProgramObjectARB" );
+		qglAttachObjectARB = (PFNGLATTACHOBJECTARBPROC)GLimp_ExtensionPointer( "glAttachObjectARB" );
+		qglLinkProgramARB = (PFNGLLINKPROGRAMARBPROC)GLimp_ExtensionPointer( "glLinkProgramARB" );
+		qglUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC)GLimp_ExtensionPointer( "glUseProgramObjectARB" );
+		qglValidateProgramARB = (PFNGLVALIDATEPROGRAMARBPROC)GLimp_ExtensionPointer( "glValidateProgramARB" );
+		qglUniform1fARB = (PFNGLUNIFORM1FARBPROC)GLimp_ExtensionPointer( "glUniform1fARB" );
+		qglUniform2fARB = (PFNGLUNIFORM2FARBPROC)GLimp_ExtensionPointer( "glUniform2fARB" );
+		qglUniform3fARB = (PFNGLUNIFORM3FARBPROC)GLimp_ExtensionPointer( "glUniform3fARB" );
+		qglUniform4fARB = (PFNGLUNIFORM4FARBPROC)GLimp_ExtensionPointer( "glUniform4fARB" );
+		qglUniform1iARB = (PFNGLUNIFORM1IARBPROC)GLimp_ExtensionPointer( "glUniform1iARB" );
+		qglUniform2iARB = (PFNGLUNIFORM2IARBPROC)GLimp_ExtensionPointer( "glUniform2iARB" );
+		qglUniform3iARB = (PFNGLUNIFORM3IARBPROC)GLimp_ExtensionPointer( "glUniform3iARB" );
+		qglUniform4iARB = (PFNGLUNIFORM4IARBPROC)GLimp_ExtensionPointer( "glUniform4iARB" );
+		qglUniform2fvARB = (PFNGLUNIFORM2FVARBPROC)GLimp_ExtensionPointer( "glUniform2fvARB" );
+		qglUniform3fvARB = (PFNGLUNIFORM3FVARBPROC)GLimp_ExtensionPointer( "glUniform3fvARB" );
+		qglUniform4fvARB = (PFNGLUNIFORM4FVARBPROC)GLimp_ExtensionPointer( "glUniform4fvARB" );
+		qglUniform2ivARB = (PFNGLUNIFORM2IVARBPROC)GLimp_ExtensionPointer( "glUniform2ivARB" );
+		qglUniform3ivARB = (PFNGLUNIFORM3IVARBPROC)GLimp_ExtensionPointer( "glUniform3ivARB" );
+		qglUniform4ivARB = (PFNGLUNIFORM4IVARBPROC)GLimp_ExtensionPointer( "glUniform4ivARB" );
+		qglUniformMatrix2fvARB = (PFNGLUNIFORMMATRIX2FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix2fvARB" );
+		qglUniformMatrix3fvARB = (PFNGLUNIFORMMATRIX3FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix3fvARB" );
+		qglUniformMatrix4fvARB = (PFNGLUNIFORMMATRIX4FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix4fvARB" );
+		qglGetObjectParameterfvARB = (PFNGLGETOBJECTPARAMETERFVARBPROC)GLimp_ExtensionPointer( "glGetObjectParameterfvARB" );
+		qglGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)GLimp_ExtensionPointer( "glGetObjectParameterivARB" );
+		qglGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)GLimp_ExtensionPointer( "glGetInfoLogARB" );
+		qglGetAttachedObjectsARB = (PFNGLGETATTACHEDOBJECTSARBPROC)GLimp_ExtensionPointer( "glGetAttachedObjectsARB" );
+		qglGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)GLimp_ExtensionPointer( "glGetUniformLocationARB" );
+		qglGetActiveUniformARB = (PFNGLGETACTIVEUNIFORMARBPROC)GLimp_ExtensionPointer( "glGetActiveUniformARB" );
+		qglGetUniformfvARB = (PFNGLGETUNIFORMFVARBPROC)GLimp_ExtensionPointer( "glGetUniformfvARB" );
+		qglGetUniformivARB = (PFNGLGETUNIFORMIVARBPROC)GLimp_ExtensionPointer( "glGetUniformivARB" );
+		qglGetShaderSourceARB = (PFNGLGETSHADERSOURCEARBPROC)GLimp_ExtensionPointer( "glGetShaderSourceARB" );
+		qglBindAttribLocationARB = (PFNGLBINDATTRIBLOCATIONARBPROC)GLimp_ExtensionPointer( "glBindAttribLocationARB" );
+		qglGetActiveAttribARB = (PFNGLGETACTIVEATTRIBARBPROC)GLimp_ExtensionPointer( "glGetActiveAttribARB" );
+		qglGetAttribLocationARB = (PFNGLGETATTRIBLOCATIONARBPROC)GLimp_ExtensionPointer( "glGetAttribLocationARB" );
+		qglGetShaderiv = (void ( APIENTRY * )(GLuint shader, GLenum pname, GLint* param))GLimp_ExtensionPointer( "glGetShaderiv" );
+		qglDeleteShader = (void ( APIENTRY * )(GLuint shader))GLimp_ExtensionPointer( "glDeleteShader" );
+		qglGetShaderInfoLog = (void ( APIENTRY * )(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog))GLimp_ExtensionPointer( "glGetShaderInfoLog" );
+ 	}
 
+}
 
 /*
 ====================
@@ -649,8 +751,10 @@ void R_InitOpenGL( void ) {
 	// parse our vertex and fragment programs, possibly disably support for
 	// one of the paths if there was an error
 	R_ARB2_Init();
+	R_GLSL_Init();
 
 	cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
+	cmdSystem->AddCommand( "reloadGLSLshaders", R_ReloadGLSLShaders_f, CMD_FL_RENDERER, "reloads GLSL shader programs" );
 	R_ReloadARBPrograms_f( idCmdArgs() );
 
 	// allocate the vertex array range or vertex objects
@@ -1758,6 +1862,12 @@ static void GfxInfo_f( const idCmdArgs &args ) {
 		common->Printf( "ARB2 path disabled\n" );
 	}
 
+	if ( glConfig.allowGLSLPath ) {
+		common->Printf( "GLSL path ENABLED%s\n", active[tr.backEndRenderer == BE_GLSL] );
+	} else {
+		common->Printf( "GLSL path disabled\n" );
+	}
+
 	if ( r_finish.GetBool() ) {
 		common->Printf( "Forcing glFinish\n" );
 	} else {
@@ -1766,11 +1876,11 @@ static void GfxInfo_f( const idCmdArgs &args ) {
 
 	bool tss = glConfig.twoSidedStencilAvailable;
 
-	if ( !r_useTwoSidedStencil.GetBool() && tss ) {
+	if ( !r_useTwoSidedStencil.GetBool() && glConfig.twoSidedStencilAvailable ) {
 		common->Printf( "Two sided stencil available but disabled\n" );
-	} else if ( !tss ) {
+	} else if ( !glConfig.twoSidedStencilAvailable ) {
 		common->Printf( "Two sided stencil not available\n" );
-	} else if ( tss ) {
+	} else if ( glConfig.twoSidedStencilAvailable ) {
 		common->Printf( "Using two sided stencil\n" );
 	}
 
