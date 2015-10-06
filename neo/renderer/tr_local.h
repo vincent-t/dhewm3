@@ -563,9 +563,114 @@ bool R_GlobalShaderOverride( const idMaterial **shader );
 // this does various checks before calling the idDeclSkin
 const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSkin *customSkin, const idMaterial *customShader );
 
-
 //====================================================
 
+typedef enum {
+  VA_NORMAL				= BIT(0),
+  VA_TANGENT				= BIT(1),
+  VA_BITANGENT			= BIT(2),
+  VA_TEXCOORD				= BIT(3),
+  VA_COLOR				= BIT(4),
+} vertexAttrib_t;
+
+#define MAX_SHADERS							512
+
+typedef struct shader_s {
+  char					name[MAX_OSPATH];
+  bool					compiled;
+
+  GLenum                  type;
+  int						references;
+
+  unsigned int			shaderId;
+
+  struct shader_s *		nextHash;
+} shader_t;
+
+#define MAX_PROGRAMS						256
+#define MAX_PROGRAM_UNIFORMS				64
+
+#define MAX_UNIFORM_NAME_LENGTH				64
+
+typedef enum {
+  UT_CLIP_PLANE,
+  UT_VIEW_ORIGIN,
+  UT_VIEW_AXIS,
+  UT_ENTITY_ORIGIN,
+  UT_ENTITY_AXIS,
+	UT_MODEL_MATRIX,
+  UT_CUSTOM
+} uniformType_t;
+
+typedef struct uniform_s {
+  char					name[MAX_UNIFORM_NAME_LENGTH];
+
+  uniformType_t			type;
+  int						size;
+  unsigned int			format;
+  int						location;
+
+  int						unit;
+
+  float					values[4];
+} uniform_t;
+
+typedef struct shaderProgram_s
+{
+  char                    name[MAX_OSPATH];
+  bool                    linked;
+
+  unsigned int            program;					// program = vertex + fragment shader
+
+  shader_t                *vertexShader;
+  shader_t                *fragmentShader;
+
+  int                     vertexAttribs;
+
+  int                     numUniforms;
+  uniform_t               *uniforms;
+} shaderProgram_t;
+
+typedef struct {
+  uniform_t *				localLightOrigin;
+} stencilShadowParms_t;
+
+typedef struct {
+  uniform_t *				localLightOrigin;
+  uniform_t *				localViewOrigin;
+  uniform_t *				lightProjectionS;
+  uniform_t *				lightProjectionT;
+  uniform_t *				lightProjectionQ;
+  uniform_t *				lightFalloff;
+  uniform_t *				bumpMatrixS;
+  uniform_t *				bumpMatrixT;
+  uniform_t *				diffuseMatrixS;
+  uniform_t *				diffuseMatrixT;
+  uniform_t *				specularMatrixS;
+  uniform_t *				specularMatrixT;
+  uniform_t *				colorModulate;
+  uniform_t *				colorAdd;
+  uniform_t *				diffuseColor;
+  uniform_t *				specularColor;
+} interactionParms_t;
+
+typedef struct {
+  uniform_t *				localViewOrigin;
+} cubeParms_t;
+
+typedef struct {
+  uniform_t *				clipPlane;
+  uniform_t *				color;
+  uniform_t *				alphaReference;
+} depthParms_t;
+
+typedef struct {
+  uniform_t *				clipPlane;
+  uniform_t *				color;
+  uniform_t *				texturePlane;
+} textureParms_t;
+
+//====================================================
 
 /*
 ** performanceCounters_t
@@ -592,7 +697,6 @@ typedef struct {
 	int		frontEndMsec;		// sum of time in all RE_RenderScene's in a frame
 } performanceCounters_t;
 
-
 typedef struct {
 	int		current2DMap;
 	int		current3DMap;
@@ -602,9 +706,12 @@ typedef struct {
 } tmu_t;
 
 const int MAX_MULTITEXTURE_UNITS =	8;
+
 typedef struct {
 	tmu_t		tmu[MAX_MULTITEXTURE_UNITS];
 	int			currenttmu;
+
+	GLhandleARB program;
 
 	int			faceCulling;
 	int			glStateBits;
@@ -630,9 +737,7 @@ typedef struct {
 	int		c_shadowVertexes;
 
 	int		c_vboIndexes;
-	float	c_overDraw;
 
-	float	maxLightValue;	// for light scale
 	int		msec;			// total msec for backend run
 } backEndCounters_t;
 
@@ -652,17 +757,21 @@ typedef struct {
 	float				lightTextureMatrix[16];	// only if lightStage->texture.hasMatrix
 	float				lightColor[4];		// evaluation of current light's color stage
 
-	float				lightScale;			// Every light color calaculation will be multiplied by this,
-											// which will guarantee that the result is < tr.backEndRendererMaxLight
-											// A card with high dynamic range will have this set to 1.0
-	float				overBright;			// The amount that all light interactions must be multiplied by
-											// with post processing to get the desired total light level.
-											// A high dynamic range card will have this set to 1.0.
-
 	bool				currentRenderCopied;	// true if any material has already referenced _currentRender
 
 	// our OpenGL state deltas
 	glstate_t			glState;
+
+	// GLSL shader program uniforms
+  stencilShadowParms_t stencilShadowParms;
+  interactionParms_t  interactionParms;
+	interactionParms_t interactionAmbientParms;
+	cubeParms_t cubeNormalReflectParms;
+	cubeParms_t cubeReflectParms;
+	depthParms_t depthParms;
+  depthParms_t depthWithMaskParms;
+	textureParms_t textureParms;
+	textureParms_t textureProjectedParms;
 
 	int					c_copyFrameBuffer;
 } backEndState_t;
@@ -670,12 +779,6 @@ typedef struct {
 
 const int MAX_GUI_SURFACES	= 1024;		// default size of the drawSurfs list for guis, will
 										// be automatically expanded as needed
-
-typedef enum {
-	BE_ARB2,
-	BE_GLSL,
-	BE_BAD
-} backEndName_t;
 
 typedef struct {
 	int		x, y, width, height;	// these are in physical, OpenGL Y-at-bottom pixels
@@ -706,8 +809,8 @@ public:
 	virtual bool			RegisterFont( const char *fontName, fontInfoEx_t &font );
 	virtual void			SetColor( const idVec4 &rgba );
 	virtual void			SetColor4( float r, float g, float b, float a );
-	virtual void			DrawStretchPic ( const idDrawVert *verts, const glIndex_t *indexes, int vertCount, int indexCount, const idMaterial *material,
-											bool clip = true, float x = 0.0f, float y = 0.0f, float w = 640.0f, float h = 0.0f );
+	virtual void			DrawStretchPic ( const idDrawVert *verts, const glIndex_t *indexes, int vertCount, int indexCount, const idMaterial *material, bool clip = true, float x = 0.0f, float y = 0.0f, float w = 640.0f, float h = 0.0f );
+
 	virtual void			DrawStretchPic ( float x, float y, float w, float h, float s1, float t1, float s2, float t2, const idMaterial *material );
 
 	virtual void			DrawStretchTri ( idVec2 p1, idVec2 p2, idVec2 p3, idVec2 t1, idVec2 t2, idVec2 t3, const idMaterial *material );
@@ -756,14 +859,9 @@ public:
 	int						viewportOffset[2];	// for doing larger-than-window tiled renderings
 	int						tiledViewport[2];
 
-	// determines which back end to use, and if vertex programs are in use
-	backEndName_t			backEndRenderer;
-	bool					backEndRendererHasVertexPrograms;
 	float					backEndRendererMaxLight;	// 1.0 for standard, unlimited for floats
 														// determines how much overbrighting needs
 														// to be done post-process
-
-	idVec4					ambientLightVector;	// used for "ambient bump mapping"
 
 	float					sortOffset;				// for determinist sorting of equal sort materials
 
@@ -792,6 +890,17 @@ public:
 
 	renderCrop_t			renderCrops[MAX_RENDER_CROPS];
 	int						currentRenderCrop;
+
+	// GLSL shader programs
+  shaderProgram_t *		stencilShadowProgram;
+  shaderProgram_t *		interactionProgram;
+  shaderProgram_t *		interactionAmbientProgram;
+	shaderProgram_t *		cubeNormalReflectProgram;
+  shaderProgram_t *		cubeReflectProgram;
+	shaderProgram_t *   depthProgram;
+  shaderProgram_t *   depthWithMaskProgram;
+	shaderProgram_t *   textureProgram;
+  shaderProgram_t *   textureProjectedProgram;
 
 	// GUI drawing variables for surface creation
 	int						guiRecursionLevel;		// to prevent infinite overruns
@@ -831,8 +940,6 @@ extern idCVar r_flareSize;				// scale the flare deforms from the material def
 extern idCVar r_gamma;					// changes gamma tables
 extern idCVar r_brightness;				// changes gamma tables
 
-extern idCVar r_renderer;				// arb2, glsl, etc
-
 extern idCVar r_checkBounds;			// compare all surface bounds with precalculated ones
 
 extern idCVar r_useLightPortalFlow;		// 1 = do a more precise area reference determination
@@ -855,16 +962,12 @@ extern idCVar r_usePreciseTriangleInteractions;	// 1 = do winding clipping to de
 extern idCVar r_useTurboShadow;			// 1 = use the infinite projection with W technique for dynamic shadows
 extern idCVar r_useExternalShadows;		// 1 = skip drawing caps when outside the light volume
 extern idCVar r_useOptimizedShadows;	// 1 = use the dmap generated static shadow volumes
-extern idCVar r_useShadowVertexProgram;	// 1 = do the shadow projection in the vertex program on capable cards
 extern idCVar r_useShadowProjectedCull;	// 1 = discard triangles outside light volume before shadowing
 extern idCVar r_useDeferredTangents;	// 1 = don't always calc tangents after deform
 extern idCVar r_useCachedDynamicModels;	// 1 = cache snapshots of dynamic models
-extern idCVar r_useTwoSidedStencil;		// 1 = do stencil shadows in one pass with different ops on each side
-extern idCVar r_useInfiniteFarZ;		// 1 = use the no-far-clip-plane trick
 extern idCVar r_useScissor;				// 1 = scissor clip as portals and lights are processed
 extern idCVar r_usePortals;				// 1 = use portals to perform area culling, otherwise draw everything
 extern idCVar r_useStateCaching;		// avoid redundant state changes in GL_*() calls
-extern idCVar r_useCombinerDisplayLists;// if 1, put all nvidia register combiner programming in display lists
 extern idCVar r_useVertexBuffers;		// if 0, don't use ARB_vertex_buffer_object for vertexes
 extern idCVar r_useIndexBuffers;		// if 0, don't use ARB_vertex_buffer_object for indexes
 extern idCVar r_useEntityCallbacks;		// if 0, issue the callback immediately at update time, rather than defering
@@ -881,7 +984,7 @@ extern idCVar r_skipRender;				// skip 3D rendering, but pass 2D
 extern idCVar r_skipRenderContext;		// NULL the rendering context during backend 3D rendering
 extern idCVar r_skipTranslucent;		// skip the translucent interaction rendering
 extern idCVar r_skipAmbient;			// bypasses all non-interaction drawing
-extern idCVar r_skipNewAmbient;			// bypasses all vertex/fragment program ambients
+extern idCVar r_skipNewAmbient;		// bypasses all vertex/fragment shader program stages
 extern idCVar r_skipBlendLights;		// skip all blend lights
 extern idCVar r_skipFogLights;			// skip all fog lights
 extern idCVar r_skipSubviews;			// 1 = don't render any mirrors / cameras / etc
@@ -890,7 +993,6 @@ extern idCVar r_skipParticles;			// 1 = don't render any particles
 extern idCVar r_skipUpdates;			// 1 = don't accept any entity or light updates, making everything static
 extern idCVar r_skipDeforms;			// leave all deform materials in their original state
 extern idCVar r_skipDynamicTextures;	// don't dynamically create textures
-extern idCVar r_skipLightScale;			// don't do any post-interaction light scaling, makes things dim on low-dynamic range cards
 extern idCVar r_skipBump;				// uses a flat surface instead of the bump map
 extern idCVar r_skipSpecular;			// use black for specular
 extern idCVar r_skipDiffuse;			// use black for diffuse
@@ -909,7 +1011,6 @@ extern idCVar r_showVertexColor;		// draws all triangles with the solid vertex c
 extern idCVar r_showUpdates;			// report entity and light updates and ref counts
 extern idCVar r_showDemo;				// report reads and writes to the demo file
 extern idCVar r_showDynamic;			// report stats on dynamic surface generation
-extern idCVar r_showLightScale;			// report the scale factor applied to drawing for overbrights
 extern idCVar r_showIntensity;			// draw the screen colors based on intensity, red = 0, green = 128, blue = 255
 extern idCVar r_showDefs;				// report the number of modeDefs and lightDefs in view
 extern idCVar r_showTrace;				// show the intersection of an eye trace with the world
@@ -949,8 +1050,6 @@ extern idCVar r_testGamma;				// draw a grid pattern to test gamma levels
 extern idCVar r_testStepGamma;			// draw a grid pattern to test gamma levels
 extern idCVar r_testGammaBias;			// draw a grid pattern to test gamma levels
 
-extern idCVar r_testARBProgram;			// experiment with vertex/fragment programs
-
 extern idCVar r_singleLight;			// suppress all but one light
 extern idCVar r_singleEntity;			// suppress all but one entity
 extern idCVar r_singleArea;				// only draw the portal area the view is actually in
@@ -980,6 +1079,7 @@ GL wrapper/helper functions
 ====================================================================
 */
 
+void  GL_BindProgram( shaderProgram_t *program );
 void	GL_SelectTexture( int unit );
 void	GL_CheckErrors( void );
 void	GL_ClearStateDelta( void );
@@ -1030,6 +1130,13 @@ const int GLS_ATEST_GE_128						= 0x40000000;
 const int GLS_ATEST_BITS						= 0x70000000;
 
 const int GLS_DEFAULT							= GLS_DEPTHFUNC_ALWAYS;
+
+enum {
+  GLVA_TEXCOORD = 8,
+  GLVA_TANGENT,
+  GLVA_BITANGENT,
+  GLVA_NORMAL
+};
 
 void R_Init( void );
 void R_InitOpenGL( void );
@@ -1167,7 +1274,6 @@ void R_LinkLightSurf( const drawSurf_t **link, const srfTriangles_t *tri, const 
 				   const idRenderLightLocal *light, const idMaterial *shader, const idScreenRect &scissor, bool viewInsideShadow );
 
 bool R_CreateAmbientCache( srfTriangles_t *tri, bool needsLighting );
-bool R_CreateLightingCache( const idRenderEntityLocal *ent, const idRenderLightLocal *light, srfTriangles_t *tri );
 void R_CreatePrivateShadowCache( srfTriangles_t *tri );
 void R_CreateVertexProgramShadowCache( srfTriangles_t *tri );
 
@@ -1183,8 +1289,7 @@ void R_RegenerateWorld_f( const idCmdArgs &args );
 
 void R_ModulateLights_f( const idCmdArgs &args );
 
-void R_SetLightProject( idPlane lightProject[4], const idVec3 origin, const idVec3 targetPoint,
-	   const idVec3 rightVector, const idVec3 upVector, const idVec3 start, const idVec3 stop );
+void R_SetLightProject( idPlane lightProject[4], const idVec3 origin, const idVec3 targetPoint, const idVec3 rightVector, const idVec3 upVector, const idVec3 start, const idVec3 stop );
 
 void R_AddLightSurfaces( void );
 void R_AddModelSurfaces( void );
@@ -1233,10 +1338,8 @@ void RB_LeaveDepthHack();
 void RB_DrawElementsImmediate( const srfTriangles_t *tri );
 void RB_RenderTriangleSurface( const srfTriangles_t *tri );
 void RB_T_RenderTriangleSurface( const drawSurf_t *surf );
-void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs,
-					  void (*triFunc_)( const drawSurf_t *) );
-void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs,
-										void (*triFunc_)( const drawSurf_t *) );
+void RB_RenderDrawSurfListWithFunction( drawSurf_t **drawSurfs, int numDrawSurfs, void (*triFunc_)( const drawSurf_t *) );
+void RB_RenderDrawSurfChainWithFunction( const drawSurf_t *drawSurfs, void (*triFunc_)( const drawSurf_t *) );
 void RB_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs );
 void RB_LoadShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture );
 void RB_GetShaderTextureMatrix( const float *shaderRegisters, const textureStage_t *texture, float matrix[16] );
@@ -1246,9 +1349,7 @@ const shaderStage_t *RB_SetLightTexture( const idRenderLightLocal *light );
 
 void RB_DrawView( const void *data );
 
-void RB_DetermineLightScale( void );
-void RB_STD_LightScale( void );
-void RB_BeginDrawingView (void);
+void RB_BeginDrawingView ( void );
 
 /*
 ============================================================
@@ -1260,141 +1361,72 @@ DRAW_STANDARD
 
 void RB_DrawElementsWithCounters( const srfTriangles_t *tri );
 void RB_DrawShadowElementsWithCounters( const srfTriangles_t *tri, int numIndexes );
-void RB_STD_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
+
 void RB_BindVariableStageImage( const textureStage_t *texture, const float *shaderRegisters );
 void RB_BindStageTexture( const float *shaderRegisters, const textureStage_t *texture, const drawSurf_t *surf );
+
 void RB_FinishStageTexture( const textureStage_t *texture, const drawSurf_t *surf );
+
 void RB_StencilShadowPass( const drawSurf_t *drawSurfs );
+
 void RB_STD_DrawView( void );
 void RB_STD_FogAllLights( void );
-void RB_BakeTextureMatrixIntoTexgen( idPlane lightProject[3], const float textureMatrix[16] );
 
 /*
 ============================================================
 
-DRAW_*
+DRAW_GLSL
 
 ============================================================
 */
 
-void	R_ARB2_Init( void );
-void	RB_ARB2_DrawInteractions( void );
-void	R_ReloadARBPrograms_f( const idCmdArgs &args );
-int		R_FindARBProgram( GLenum target, const char *program );
-
-void	R_GLSL_Init( void );
-void	R_ReloadGLSLShaders_f( const idCmdArgs &args );
-void	RB_GLSL_DrawInteractions( void );
-
-typedef enum {
-	PROG_INVALID,
-	VPROG_INTERACTION,
-	VPROG_ENVIRONMENT,
-	VPROG_BUMPY_ENVIRONMENT,
-	VPROG_STENCIL_SHADOW,
-	VPROG_TEST,
-	FPROG_INTERACTION,
-	FPROG_ENVIRONMENT,
-	FPROG_BUMPY_ENVIRONMENT,
-	FPROG_TEST,
-	VPROG_AMBIENT,
-	FPROG_AMBIENT,
-	VPROG_GLASSWARP,
-	FPROG_GLASSWARP,
-	PROG_USER
-} program_t;
-
-typedef struct shaderProgram_s
-{
-	GLhandleARB     program;					// program = vertex + fragment shader
-
-	GLhandleARB     vertexShader;
-	GLhandleARB     fragmentShader;
-
-	// uniform parameters
-	GLint			u_normalTexture;
-	GLint			u_lightFalloffTexture;
-	GLint			u_lightProjectionTexture;
-	GLint			u_diffuseTexture;
-	GLint			u_specularTexture;
-
-	GLint			modelMatrix;
-
-	GLint			localLightOrigin;
-	GLint			localViewOrigin;
-
-	GLint			lightProjectionS;
-	GLint			lightProjectionT;
-	GLint			lightProjectionQ;
-	GLint			lightFalloff;
-
-	GLint			bumpMatrixS;
-	GLint			bumpMatrixT;
-	GLint			diffuseMatrixS;
-	GLint			diffuseMatrixT;
-	GLint			specularMatrixS;
-	GLint			specularMatrixT;
-
-	GLint			colorModulate;
-	GLint			colorAdd;
-
-	GLint			diffuseColor;
-	GLint			specularColor;
-} shaderProgram_t;
-
-extern shaderProgram_t  interactionShader;
-extern shaderProgram_t  ambientInteractionShader;
-extern shaderProgram_t	stencilShadowShader;
+void	RB_GLSL_DrawForwardInteractions( void );
+void  RB_GLSL_FillDepthBuffer( drawSurf_t **drawSurfs, int numDrawSurfs );
 
 /*
+============================================================
 
-  All vertex programs use the same constant register layout:
+GLSL SHADER AND PROGRAM MANAGMENT
 
-c[4]	localLightOrigin
-c[5]	localViewOrigin
-c[6]	lightProjection S
-c[7]	lightProjection T
-c[8]	lightProjection Q
-c[9]	lightFalloff	S
-c[10]	bumpMatrix S
-c[11]	bumpMatrix T
-c[12]	diffuseMatrix S
-c[13]	diffuseMatrix T
-c[14]	specularMatrix S
-c[15]	specularMatrix T
-
-
-c[20]	light falloff tq constant
-
-// texture 0 was cube map
-// texture 1 will be the per-surface bump map
-// texture 2 will be the light falloff texture
-// texture 3 will be the light projection texture
-// texture 4 is the per-surface diffuse map
-// texture 5 is the per-surface specular map
-// texture 6 is the specular half angle cube map
-
+============================================================
 */
 
-typedef enum {
-	PP_LIGHT_ORIGIN = 4,
-	PP_VIEW_ORIGIN,
-	PP_LIGHT_PROJECT_S,
-	PP_LIGHT_PROJECT_T,
-	PP_LIGHT_PROJECT_Q,
-	PP_LIGHT_FALLOFF_S,
-	PP_BUMP_MATRIX_S,
-	PP_BUMP_MATRIX_T,
-	PP_DIFFUSE_MATRIX_S,
-	PP_DIFFUSE_MATRIX_T,
-	PP_SPECULAR_MATRIX_S,
-	PP_SPECULAR_MATRIX_T,
-	PP_COLOR_MODULATE,
-	PP_COLOR_ADD,
+void	R_ReloadGLSLPrograms_f( const idCmdArgs &args );
 
-	PP_LIGHT_FALLOFF_TQ = 20	// only for NV programs
-} programParameter_t;
+void  R_InitShaders (void);
+void  R_ShutdownShaders (void);
+shader_t *R_FindShader ( const char *name, GLenum type );
 
+void  R_InitPrograms (void);
+void  R_ShutdownPrograms (void);
+shaderProgram_t *R_FindProgram ( const char *name, shader_t *vertexShader, shader_t *fragmentShader );
+
+uniform_t *R_GetProgramUniform (shaderProgram_t *program, const char *name);
+uniform_t *R_GetProgramUniformExplicit (shaderProgram_t *program, const char *name, int size, uint format);
+
+void	R_SetProgramSampler (shaderProgram_t *program, uniform_t *uniform, int unit);
+void	R_SetProgramSamplerExplicit (shaderProgram_t *program, const char *name, int size, uint format, int unit);
+
+void	R_UniformFloat (uniform_t *uniform, float v0);
+void	R_UniformFloat2 (uniform_t *uniform, float v0, float v1);
+void	R_UniformFloat3 (uniform_t *uniform, float v0, float v1, float v2);
+void	R_UniformFloat4 (uniform_t *uniform, float v0, float v1, float v2, float v3);
+void	R_UniformFloatArray (uniform_t *uniform, int count, const float *v);
+
+void	R_UniformVector2 (uniform_t *uniform, const idVec2 &v);
+void	R_UniformVector2Array (uniform_t *uniform, int count, const idVec2 *v);
+
+void	R_UniformVector3 (uniform_t *uniform, const idVec3 &v);
+void	R_UniformVector3Array (uniform_t *uniform, int count, const idVec3 *v);
+
+void	R_UniformVector4 (uniform_t *uniform, const idVec4 &v);
+void	R_UniformVector4Array (uniform_t *uniform, int count, const idVec4 *v);
+
+void	R_UniformMatrix3 (uniform_t *uniform, const idMat3 &m);
+void	R_UniformMatrix3Array (uniform_t *uniform, int count, const idMat3 *m);
+
+void	R_UniformMatrix4 (uniform_t *uniform, const idMat4 &m);
+void	R_UniformMatrix4Array (uniform_t *uniform, int count, const idMat4 *m);
 
 /*
 ============================================================
@@ -1417,27 +1449,6 @@ typedef enum {
 srfTriangles_t *R_CreateShadowVolume( const idRenderEntityLocal *ent,
 									 const srfTriangles_t *tri, const idRenderLightLocal *light,
 									 shadowGen_t optimize, srfCullInfo_t &cullInfo );
-
-/*
-============================================================
-
-TR_TURBOSHADOW
-
-Fast, non-clipped overshoot shadow volumes
-
-"facing" should have one more element than tri->numIndexes / 3, which should be set to 1
-calling this function may modify "facing" based on culling
-
-============================================================
-*/
-
-srfTriangles_t *R_CreateVertexProgramTurboShadowVolume( const idRenderEntityLocal *ent,
-									 const srfTriangles_t *tri, const idRenderLightLocal *light,
-									 srfCullInfo_t &cullInfo );
-
-srfTriangles_t *R_CreateTurboShadowVolume( const idRenderEntityLocal *ent,
-									 const srfTriangles_t *tri, const idRenderLightLocal *light,
-									 srfCullInfo_t &cullInfo );
 
 /*
 ============================================================

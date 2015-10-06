@@ -49,9 +49,6 @@ If you have questions concerning this license or the applicable additional terms
 
 glconfig_t	glConfig;
 
-const char *r_rendererArgs[] = { "best", "arb2", "glsl", NULL };
-
-idCVar r_inhibitFragmentProgram( "r_inhibitFragmentProgram", "0", CVAR_RENDERER | CVAR_BOOL, "ignore the fragment program extension" );
 idCVar r_useLightPortalFlow( "r_useLightPortalFlow", "1", CVAR_RENDERER | CVAR_BOOL, "use a more precise area reference determination" );
 idCVar r_multiSamples( "r_multiSamples", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "number of antialiasing samples" );
 idCVar r_mode( "r_mode", "5", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "video mode number" );
@@ -66,11 +63,9 @@ idCVar r_useConstantMaterials( "r_useConstantMaterials", "1", CVAR_RENDERER | CV
 idCVar r_useSilRemap( "r_useSilRemap", "1", CVAR_RENDERER | CVAR_BOOL, "consider verts with the same XYZ, but different ST the same for shadows" );
 idCVar r_useNodeCommonChildren( "r_useNodeCommonChildren", "1", CVAR_RENDERER | CVAR_BOOL, "stop pushing reference bounds early when possible" );
 idCVar r_useShadowProjectedCull( "r_useShadowProjectedCull", "1", CVAR_RENDERER | CVAR_BOOL, "discard triangles outside light volume before shadowing" );
-idCVar r_useShadowVertexProgram( "r_useShadowVertexProgram", "1", CVAR_RENDERER | CVAR_BOOL, "do the shadow projection in the vertex program on capable cards" );
 idCVar r_useShadowSurfaceScissor( "r_useShadowSurfaceScissor", "1", CVAR_RENDERER | CVAR_BOOL, "scissor shadows by the scissor rect of the interaction surfaces" );
 idCVar r_useInteractionTable( "r_useInteractionTable", "1", CVAR_RENDERER | CVAR_BOOL, "create a full entityDefs * lightDefs table to make finding interactions faster" );
 idCVar r_useTurboShadow( "r_useTurboShadow", "1", CVAR_RENDERER | CVAR_BOOL, "use the infinite projection with W technique for dynamic shadows" );
-idCVar r_useTwoSidedStencil( "r_useTwoSidedStencil", "1", CVAR_RENDERER | CVAR_BOOL, "do stencil shadows in one pass with different ops on each side" );
 idCVar r_useDeferredTangents( "r_useDeferredTangents", "1", CVAR_RENDERER | CVAR_BOOL, "defer tangents calculations after deform" );
 idCVar r_useCachedDynamicModels( "r_useCachedDynamicModels", "1", CVAR_RENDERER | CVAR_BOOL, "cache snapshots of dynamic models" );
 
@@ -78,7 +73,6 @@ idCVar r_useVertexBuffers( "r_useVertexBuffers", "1", CVAR_RENDERER | CVAR_INTEG
 idCVar r_useIndexBuffers( "r_useIndexBuffers", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "use ARB_vertex_buffer_object for indexes", 0, 1, idCmdSystem::ArgCompletion_Integer<0,1>  );
 
 idCVar r_useStateCaching( "r_useStateCaching", "1", CVAR_RENDERER | CVAR_BOOL, "avoid redundant state changes in GL_*() calls" );
-idCVar r_useInfiniteFarZ( "r_useInfiniteFarZ", "1", CVAR_RENDERER | CVAR_BOOL, "use the no-far-clip-plane trick" );
 
 idCVar r_znear( "r_znear", "3", CVAR_RENDERER | CVAR_FLOAT, "near Z clip plane distance", 0.001f, 200.0f );
 
@@ -89,13 +83,10 @@ idCVar r_swapInterval( "r_swapInterval", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVA
 idCVar r_gamma( "r_gamma", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "changes gamma tables", 0.5f, 3.0f );
 idCVar r_brightness( "r_brightness", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "changes gamma tables", 0.5f, 2.0f );
 
-idCVar r_renderer( "r_renderer", "best", CVAR_RENDERER | CVAR_ARCHIVE, "hardware specific renderer path to use", r_rendererArgs, idCmdSystem::ArgCompletion_String<r_rendererArgs> );
-
 idCVar r_jitter( "r_jitter", "0", CVAR_RENDERER | CVAR_BOOL, "randomly subpixel jitter the projection matrix" );
 
 idCVar r_skipSuppress( "r_skipSuppress", "0", CVAR_RENDERER | CVAR_BOOL, "ignore the per-view suppressions" );
 idCVar r_skipPostProcess( "r_skipPostProcess", "0", CVAR_RENDERER | CVAR_BOOL, "skip all post-process renderings" );
-idCVar r_skipLightScale( "r_skipLightScale", "0", CVAR_RENDERER | CVAR_BOOL, "don't do any post-interaction light scaling, makes things dim on low-dynamic range cards" );
 idCVar r_skipInteractions( "r_skipInteractions", "0", CVAR_RENDERER | CVAR_BOOL, "skip all light/surface interaction drawing" );
 idCVar r_skipDynamicTextures( "r_skipDynamicTextures", "0", CVAR_RENDERER | CVAR_BOOL, "don't dynamically create textures" );
 idCVar r_skipCopyTexture( "r_skipCopyTexture", "0", CVAR_RENDERER | CVAR_BOOL, "do all rendering, but don't actually copyTexSubImage2D" );
@@ -104,7 +95,7 @@ idCVar r_skipRender( "r_skipRender", "0", CVAR_RENDERER | CVAR_BOOL, "skip 3D re
 idCVar r_skipRenderContext( "r_skipRenderContext", "0", CVAR_RENDERER | CVAR_BOOL, "NULL the rendering context during backend 3D rendering" );
 idCVar r_skipTranslucent( "r_skipTranslucent", "0", CVAR_RENDERER | CVAR_BOOL, "skip the translucent interaction rendering" );
 idCVar r_skipAmbient( "r_skipAmbient", "0", CVAR_RENDERER | CVAR_BOOL, "bypasses all non-interaction drawing" );
-idCVar r_skipNewAmbient( "r_skipNewAmbient", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "bypasses all vertex/fragment program ambient drawing" );
+idCVar r_skipNewAmbient( "r_skipNewAmbient", "0", CVAR_RENDERER | CVAR_BOOL | CVAR_ARCHIVE, "bypasses all vertex/fragment shader program stages" );
 idCVar r_skipBlendLights( "r_skipBlendLights", "0", CVAR_RENDERER | CVAR_BOOL, "skip all blend lights" );
 idCVar r_skipFogLights( "r_skipFogLights", "0", CVAR_RENDERER | CVAR_BOOL, "skip all fog lights" );
 idCVar r_skipDeforms( "r_skipDeforms", "0", CVAR_RENDERER | CVAR_BOOL, "leave all deform materials in their original state" );
@@ -140,7 +131,6 @@ idCVar r_skipGuiShaders( "r_skipGuiShaders", "0", CVAR_RENDERER | CVAR_INTEGER, 
 idCVar r_skipParticles( "r_skipParticles", "0", CVAR_RENDERER | CVAR_INTEGER, "1 = skip all particle systems", 0, 1, idCmdSystem::ArgCompletion_Integer<0,1> );
 idCVar r_subviewOnly( "r_subviewOnly", "0", CVAR_RENDERER | CVAR_BOOL, "1 = don't render main view, allowing subviews to be debugged" );
 idCVar r_shadows( "r_shadows", "1", CVAR_RENDERER | CVAR_BOOL  | CVAR_ARCHIVE, "enable shadows" );
-idCVar r_testARBProgram( "r_testARBProgram", "0", CVAR_RENDERER | CVAR_BOOL, "experiment with vertex/fragment programs" );
 idCVar r_testGamma( "r_testGamma", "0", CVAR_RENDERER | CVAR_FLOAT, "if > 0 draw a grid pattern to test gamma levels", 0, 195 );
 idCVar r_testGammaBias( "r_testGammaBias", "0", CVAR_RENDERER | CVAR_FLOAT, "if > 0 draw a grid pattern to test gamma levels" );
 idCVar r_testStepGamma( "r_testStepGamma", "0", CVAR_RENDERER | CVAR_FLOAT, "if > 0 draw a grid pattern to test gamma levels" );
@@ -151,7 +141,6 @@ idCVar r_flareSize( "r_flareSize", "1", CVAR_RENDERER | CVAR_FLOAT, "scale the f
 idCVar r_useExternalShadows( "r_useExternalShadows", "1", CVAR_RENDERER | CVAR_INTEGER, "1 = skip drawing caps when outside the light volume, 2 = force to no caps for testing", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
 idCVar r_useOptimizedShadows( "r_useOptimizedShadows", "1", CVAR_RENDERER | CVAR_BOOL, "use the dmap generated static shadow volumes" );
 idCVar r_useScissor( "r_useScissor", "1", CVAR_RENDERER | CVAR_BOOL, "scissor clip as portals and lights are processed" );
-idCVar r_useCombinerDisplayLists( "r_useCombinerDisplayLists", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_NOCHEAT, "put all nvidia register combiner programming in display lists" );
 idCVar r_useDepthBoundsTest( "r_useDepthBoundsTest", "1", CVAR_RENDERER | CVAR_BOOL, "use depth bounds test to reduce shadow fill" );
 
 idCVar r_screenFraction( "r_screenFraction", "100", CVAR_RENDERER | CVAR_INTEGER, "for testing fill rate, the resolution of the entire screen can be changed" );
@@ -173,7 +162,6 @@ idCVar r_showVertexColor( "r_showVertexColor", "0", CVAR_RENDERER | CVAR_BOOL, "
 idCVar r_showUpdates( "r_showUpdates", "0", CVAR_RENDERER | CVAR_BOOL, "report entity and light updates and ref counts" );
 idCVar r_showDemo( "r_showDemo", "0", CVAR_RENDERER | CVAR_BOOL, "report reads and writes to the demo file" );
 idCVar r_showDynamic( "r_showDynamic", "0", CVAR_RENDERER | CVAR_BOOL, "report stats on dynamic surface generation" );
-idCVar r_showLightScale( "r_showLightScale", "0", CVAR_RENDERER | CVAR_BOOL, "report the scale factor applied to drawing for overbrights" );
 idCVar r_showDefs( "r_showDefs", "0", CVAR_RENDERER | CVAR_BOOL, "report the number of modeDefs and lightDefs in view" );
 idCVar r_showTrace( "r_showTrace", "0", CVAR_RENDERER | CVAR_INTEGER, "show the intersection of an eye trace with the world", idCmdSystem::ArgCompletion_Integer<0,2> );
 idCVar r_showIntensity( "r_showIntensity", "0", CVAR_RENDERER | CVAR_BOOL, "draw the screen colors based on intensity, red = 0, green = 128, blue = 255" );
@@ -225,17 +213,12 @@ idCVar r_debugRenderToTexture( "r_debugRenderToTexture", "0", CVAR_RENDERER | CV
 #define QGLPROC(name, rettype, args) rettype (APIENTRYP q##name) args;
 #include "renderer/qgl_proc.h"
 
+// ARB_multitexture
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
 void ( APIENTRY * qglMultiTexCoord2fvARB )( GLenum texture, GLfloat *st );
 void ( APIENTRY * qglActiveTextureARB )( GLenum texture );
 void ( APIENTRY * qglClientActiveTextureARB )( GLenum texture );
 
-void (APIENTRY *qglTexImage3D)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *);
-
-void (APIENTRY * qglColorTableEXT)( int, int, int, int, int, const void * );
-
-// EXT_stencil_two_side
-//PFNGLACTIVESTENCILFACEEXTPROC			qglActiveStencilFaceEXT;
 // separate stencil
 void ( APIENTRY *qglStencilOpSeparate )( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass );
 void ( APIENTRY *qglStencilFuncSeparate ) ( GLenum face, GLenum func, GLint ref, GLuint mask );
@@ -243,6 +226,10 @@ void ( APIENTRY *qglStencilFuncSeparate ) ( GLenum face, GLenum func, GLint ref,
 // ARB_texture_compression
 PFNGLCOMPRESSEDTEXIMAGE2DARBPROC		qglCompressedTexImage2DARB;
 PFNGLGETCOMPRESSEDTEXIMAGEARBPROC		qglGetCompressedTexImageARB;
+
+// ARB_MapBufferRange
+PFNGLMAPBUFFERRANGEPROC                 qglMapBufferRange;
+PFNGLFLUSHMAPPEDBUFFERRANGEPROC         qglFlushMappedBufferRange;
 
 // ARB_vertex_buffer_object
 PFNGLBINDBUFFERARBPROC					qglBindBufferARB;
@@ -257,62 +244,58 @@ PFNGLUNMAPBUFFERARBPROC					qglUnmapBufferARB;
 PFNGLGETBUFFERPARAMETERIVARBPROC		qglGetBufferParameterivARB;
 PFNGLGETBUFFERPOINTERVARBPROC			qglGetBufferPointervARB;
 
-// ARB_vertex_program / ARB_fragment_program
+// ARB_vertex_program
 PFNGLVERTEXATTRIBPOINTERARBPROC			qglVertexAttribPointerARB;
 PFNGLENABLEVERTEXATTRIBARRAYARBPROC		qglEnableVertexAttribArrayARB;
 PFNGLDISABLEVERTEXATTRIBARRAYARBPROC	qglDisableVertexAttribArrayARB;
-PFNGLPROGRAMSTRINGARBPROC				qglProgramStringARB;
-PFNGLBINDPROGRAMARBPROC					qglBindProgramARB;
-PFNGLGENPROGRAMSARBPROC					qglGenProgramsARB;
-PFNGLPROGRAMENVPARAMETER4FVARBPROC		qglProgramEnvParameter4fvARB;
-PFNGLPROGRAMLOCALPARAMETER4FVARBPROC	qglProgramLocalParameter4fvARB;
+GLint (APIENTRY *qglGetAttribLocation)(GLuint programObj, const GLchar *name);
+void (APIENTRY *qglBindAttribLocation)(GLuint programObj, GLuint index, const GLchar *name);
+void (APIENTRY *qglBindFragDataLocation)(GLuint programObj, GLuint index, const GLchar *name);
 
 // GL_EXT_depth_bounds_test
 PFNGLDEPTHBOUNDSEXTPROC                 qglDepthBoundsEXT;
 
 // GL_ARB_shading_language_100
-void ( APIENTRY * qglDeleteObjectARB )( GLhandleARB obj );
-GLhandleARB ( APIENTRY * qglGetHandleARB )( GLenum pname );
-void ( APIENTRY * qglDetachObjectARB )( GLhandleARB containerObj, GLhandleARB attachedObj );
-GLhandleARB ( APIENTRY * qglCreateShaderObjectARB )( GLenum shaderType );
-void ( APIENTRY * qglShaderSourceARB )( GLhandleARB shaderObj, GLsizei count, const GLcharARB* *string, const GLint *length ); void ( APIENTRY * qglCompileShaderARB )( GLhandleARB shaderObj );
-GLhandleARB ( APIENTRY * qglCreateProgramObjectARB )( void );
-void ( APIENTRY * qglAttachObjectARB )( GLhandleARB containerObj, GLhandleARB obj );
-void ( APIENTRY * qglLinkProgramARB )( GLhandleARB programObj );
-void ( APIENTRY * qglUseProgramObjectARB )( GLhandleARB programObj );
-void ( APIENTRY * qglValidateProgramARB )( GLhandleARB programObj );
-void ( APIENTRY * qglUniform1fARB )( GLint location, GLfloat v0 );
-void ( APIENTRY * qglUniform2fARB )( GLint location, GLfloat v0, GLfloat v1 );
-void ( APIENTRY * qglUniform3fARB )( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 );
-void ( APIENTRY * qglUniform4fARB )( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 );
-void ( APIENTRY * qglUniform1iARB )( GLint location, GLint v0 );
-void ( APIENTRY * qglUniform2iARB )( GLint location, GLint v0, GLint v1 );
-void ( APIENTRY * qglUniform3iARB )( GLint location, GLint v0, GLint v1, GLint v2 );
-void ( APIENTRY * qglUniform4iARB )( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 );
-void ( APIENTRY * qglUniform2fvARB )( GLint location, GLsizei count, const GLfloat *value );
-void ( APIENTRY * qglUniform3fvARB )( GLint location, GLsizei count, const GLfloat *value );
-void ( APIENTRY * qglUniform4fvARB )( GLint location, GLsizei count, const GLfloat *value );
-void ( APIENTRY * qglUniform2ivARB )( GLint location, GLsizei count, const GLint *value );
-void ( APIENTRY * qglUniform3ivARB )( GLint location, GLsizei count, const GLint *value );
-void ( APIENTRY * qglUniform4ivARB )( GLint location, GLsizei count, const GLint *value );
-void ( APIENTRY * qglUniformMatrix2fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
-void ( APIENTRY * qglUniformMatrix3fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
-void ( APIENTRY * qglUniformMatrix4fvARB )( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value );
-void ( APIENTRY * qglGetObjectParameterfvARB )( GLhandleARB obj, GLenum pname, GLfloat *params );
-void ( APIENTRY * qglGetObjectParameterivARB )( GLhandleARB obj, GLenum pname, GLint *params );
-void ( APIENTRY * qglGetInfoLogARB )( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog );
-void ( APIENTRY * qglGetAttachedObjectsARB )( GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj );
-GLint ( APIENTRY * qglGetUniformLocationARB )( GLhandleARB programObj, const GLcharARB *name );
-void ( APIENTRY * qglGetActiveUniformARB )( GLhandleARB programObj, GLuint index, GLsizei maxIndex, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name );
-void ( APIENTRY * qglGetUniformfvARB )( GLhandleARB programObj, GLint location, GLfloat *params );
-void ( APIENTRY * qglGetUniformivARB )( GLhandleARB programObj, GLint location, GLint *params );
-void ( APIENTRY * qglGetShaderSourceARB )( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source );
-void ( APIENTRY * qglGetShaderiv )(GLuint shader, GLenum pname, GLint* param);
-void ( APIENTRY * qglDeleteShader )(GLuint shader);
-void ( APIENTRY * qglGetShaderInfoLog )(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog);
-void ( APIENTRY * qglBindAttribLocationARB )( GLhandleARB programObj, GLuint index, const GLcharARB *name );
-void ( APIENTRY * qglGetActiveAttribARB )( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name );
-GLint ( APIENTRY * qglGetAttribLocationARB )( GLhandleARB programObj, const GLcharARB *name );
+void (APIENTRY *qglDeleteShader)(GLuint obj);
+void (APIENTRY *qglDeleteProgram)(GLuint obj);
+void (APIENTRY *qglDetachShader)(GLuint containerObj, GLuint attachedObj);
+GLuint (APIENTRY *qglCreateShader)(GLenum shaderType);
+void (APIENTRY *qglShaderSource)(GLuint shaderObj, GLsizei count, const GLchar **string, const GLint *length);
+void (APIENTRY *qglCompileShader)(GLuint shaderObj);
+GLuint (APIENTRY *qglCreateProgram)(void);
+void (APIENTRY *qglAttachShader)(GLuint containerObj, GLuint obj);
+void (APIENTRY *qglLinkProgram)(GLuint programObj);
+void (APIENTRY *qglUseProgram)(GLuint programObj);
+void (APIENTRY *qglValidateProgram)(GLuint programObj);
+void (APIENTRY *qglUniform1f)(GLint location, GLfloat v0);
+void (APIENTRY *qglUniform2f)(GLint location, GLfloat v0, GLfloat v1);
+void (APIENTRY *qglUniform3f)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2);
+void (APIENTRY *qglUniform4f)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3);
+void (APIENTRY *qglUniform1i)(GLint location, GLint v0);
+void (APIENTRY *qglUniform2i)(GLint location, GLint v0, GLint v1);
+void (APIENTRY *qglUniform3i)(GLint location, GLint v0, GLint v1, GLint v2);
+void (APIENTRY *qglUniform4i)(GLint location, GLint v0, GLint v1, GLint v2, GLint v3);
+void (APIENTRY *qglUniform1fv)(GLint location, GLsizei count, const GLfloat *value);
+void (APIENTRY *qglUniform2fv)(GLint location, GLsizei count, const GLfloat *value);
+void (APIENTRY *qglUniform3fv)(GLint location, GLsizei count, const GLfloat *value);
+void (APIENTRY *qglUniform4fv)(GLint location, GLsizei count, const GLfloat *value);
+void (APIENTRY *qglUniform1iv)(GLint location, GLsizei count, const GLint *value);
+void (APIENTRY *qglUniform2iv)(GLint location, GLsizei count, const GLint *value);
+void (APIENTRY *qglUniform3iv)(GLint location, GLsizei count, const GLint *value);
+void (APIENTRY *qglUniform4iv)(GLint location, GLsizei count, const GLint *value);
+void (APIENTRY *qglUniformMatrix2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+void (APIENTRY *qglUniformMatrix3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+void (APIENTRY *qglUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+void (APIENTRY *qglGetShaderiv)(GLuint obj, GLenum pname, GLint *params);
+void (APIENTRY *qglGetProgramiv)(GLuint obj, GLenum pname, GLint *params);
+void (APIENTRY *qglGetShaderInfoLog)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+void (APIENTRY *qglGetProgramInfoLog)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+void (APIENTRY *qglGetAttachedShaders)(GLuint containerObj, GLsizei maxCount, GLsizei *count, GLuint *obj);
+GLint (APIENTRY *qglGetUniformLocation)(GLuint programObj, const GLchar *name);
+void (APIENTRY *qglGetActiveUniform)(GLuint programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLchar *name);
+void (APIENTRY *qglGetUniformfv)(GLuint programObj, GLint location, GLfloat *params);
+void (APIENTRY *qglGetUniformiv)(GLuint programObj, GLint location, GLint *params);
+void (APIENTRY *qglGetShaderSource)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *source);
 
 /*
 =================
@@ -344,6 +327,7 @@ static void R_CheckPortableExtensions( void ) {
 		qglMultiTexCoord2fvARB = (void(APIENTRY *)(GLenum, GLfloat *))GLimp_ExtensionPointer( "glMultiTexCoord2fvARB" );
 		qglActiveTextureARB = (void(APIENTRY *)(GLenum))GLimp_ExtensionPointer( "glActiveTextureARB" );
 		qglClientActiveTextureARB = (void(APIENTRY *)(GLenum))GLimp_ExtensionPointer( "glClientActiveTextureARB" );
+
 		qglGetIntegerv( GL_MAX_TEXTURE_UNITS_ARB, (GLint *)&glConfig.maxTextureUnits );
 		if ( glConfig.maxTextureUnits > MAX_MULTITEXTURE_UNITS ) {
 			glConfig.maxTextureUnits = MAX_MULTITEXTURE_UNITS;
@@ -355,17 +339,8 @@ static void R_CheckPortableExtensions( void ) {
 		qglGetIntegerv( GL_MAX_TEXTURE_IMAGE_UNITS_ARB, (GLint *)&glConfig.maxTextureImageUnits );
 	}
 
-	// GL_ARB_texture_env_combine
-	glConfig.textureEnvCombineAvailable = R_CheckExtension( "GL_ARB_texture_env_combine" );
-
 	// GL_ARB_texture_cube_map
 	glConfig.cubeMapAvailable = R_CheckExtension( "GL_ARB_texture_cube_map" );
-
-	// GL_ARB_texture_env_dot3
-	glConfig.envDot3Available = R_CheckExtension( "GL_ARB_texture_env_dot3" );
-
-	// GL_ARB_texture_env_add
-	glConfig.textureEnvAddAvailable = R_CheckExtension( "GL_ARB_texture_env_add" );
 
 	// GL_ARB_texture_non_power_of_two
 	glConfig.textureNonPowerOfTwoAvailable = R_CheckExtension( "GL_ARB_texture_non_power_of_two" );
@@ -400,20 +375,6 @@ static void R_CheckPortableExtensions( void ) {
 		glConfig.textureLODBiasAvailable = false;
 	}
 
-	// GL_EXT_shared_texture_palette
-	glConfig.sharedTexturePaletteAvailable = R_CheckExtension( "GL_EXT_shared_texture_palette" );
-	if ( glConfig.sharedTexturePaletteAvailable ) {
-		qglColorTableEXT = ( void ( APIENTRY * ) ( int, int, int, int, int, const void * ) ) GLimp_ExtensionPointer( "glColorTableEXT" );
-	}
-
-	// GL_EXT_texture3D (not currently used for anything)
-	glConfig.texture3DAvailable = R_CheckExtension( "GL_EXT_texture3D" );
-	if ( glConfig.texture3DAvailable ) {
-		qglTexImage3D =
-			(void (APIENTRY *)(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, const GLvoid *) )
-			GLimp_ExtensionPointer( "glTexImage3D" );
-	}
-
 	// EXT_stencil_wrap
 	// This isn't very important, but some pathological case might cause a clamp error and give a shadow bug.
 	// Nvidia also believes that future hardware may be able to run faster with this enabled to avoid the
@@ -430,16 +391,20 @@ static void R_CheckPortableExtensions( void ) {
 	qglStencilOpSeparate = (void ( APIENTRY * )( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass ))GLimp_ExtensionPointer( "glStencilOpSeparate" );
     qglStencilFuncSeparate = (void ( APIENTRY * ) ( GLenum face, GLenum func, GLint ref, GLuint mask ))GLimp_ExtensionPointer( "glStencilFuncSeparate" );
 	if( qglStencilOpSeparate && qglStencilFuncSeparate ) {
+		common->Printf( "...using %s\n", "GL_2.0_separate_stencil" );
 		glConfig.twoSidedStencilAvailable = true;
 	} else {
+		common->Printf( "X..%s not found\n", "GL_2.0_separate_stencil" );
 		glConfig.twoSidedStencilAvailable = false;
 	}
 
-/*// GL_EXT_stencil_two_side
-	glConfig.twoSidedStencilAvailable = R_CheckExtension( "GL_EXT_stencil_two_side" );
-	if ( glConfig.twoSidedStencilAvailable )
-		qglActiveStencilFaceEXT = (PFNGLACTIVESTENCILFACEEXTPROC)GLimp_ExtensionPointer( "glActiveStencilFaceEXT" );
-*/
+	// ARB_MapBufferRange
+  glConfig.ARBMapBufferRangeAvailable = R_CheckExtension( "GL_ARB_map_buffer_range" );
+  if ( glConfig.ARBMapBufferRangeAvailable ) {
+    qglMapBufferRange = (PFNGLMAPBUFFERRANGEPROC)GLimp_ExtensionPointer( "glMapBufferRange" );
+    qglFlushMappedBufferRange = (PFNGLFLUSHMAPPEDBUFFERRANGEPROC)GLimp_ExtensionPointer( "glFlushMappedBufferRange" );
+  }
+
 	// ARB_vertex_buffer_object
 	glConfig.ARBVertexBufferObjectAvailable = R_CheckExtension( "GL_ARB_vertex_buffer_object" );
 	if(glConfig.ARBVertexBufferObjectAvailable) {
@@ -462,31 +427,9 @@ static void R_CheckPortableExtensions( void ) {
 		qglVertexAttribPointerARB = (PFNGLVERTEXATTRIBPOINTERARBPROC)GLimp_ExtensionPointer( "glVertexAttribPointerARB" );
 		qglEnableVertexAttribArrayARB = (PFNGLENABLEVERTEXATTRIBARRAYARBPROC)GLimp_ExtensionPointer( "glEnableVertexAttribArrayARB" );
 		qglDisableVertexAttribArrayARB = (PFNGLDISABLEVERTEXATTRIBARRAYARBPROC)GLimp_ExtensionPointer( "glDisableVertexAttribArrayARB" );
-		qglProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC)GLimp_ExtensionPointer( "glProgramStringARB" );
-		qglBindProgramARB = (PFNGLBINDPROGRAMARBPROC)GLimp_ExtensionPointer( "glBindProgramARB" );
-		qglGenProgramsARB = (PFNGLGENPROGRAMSARBPROC)GLimp_ExtensionPointer( "glGenProgramsARB" );
-		qglProgramEnvParameter4fvARB = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)GLimp_ExtensionPointer( "glProgramEnvParameter4fvARB" );
-		qglProgramLocalParameter4fvARB = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC)GLimp_ExtensionPointer( "glProgramLocalParameter4fvARB" );
-	}
-
-	// ARB_fragment_program
-	if ( r_inhibitFragmentProgram.GetBool() ) {
-		glConfig.ARBFragmentProgramAvailable = false;
-	} else {
-		glConfig.ARBFragmentProgramAvailable = R_CheckExtension( "GL_ARB_fragment_program" );
-		if (glConfig.ARBFragmentProgramAvailable) {
-			// these are the same as ARB_vertex_program
-			qglProgramStringARB = (PFNGLPROGRAMSTRINGARBPROC)GLimp_ExtensionPointer( "glProgramStringARB" );
-			qglBindProgramARB = (PFNGLBINDPROGRAMARBPROC)GLimp_ExtensionPointer( "glBindProgramARB" );
-			qglProgramEnvParameter4fvARB = (PFNGLPROGRAMENVPARAMETER4FVARBPROC)GLimp_ExtensionPointer( "glProgramEnvParameter4fvARB" );
-			qglProgramLocalParameter4fvARB = (PFNGLPROGRAMLOCALPARAMETER4FVARBPROC)GLimp_ExtensionPointer( "glProgramLocalParameter4fvARB" );
-		}
-	}
-
-	// check for minimum set
-	if ( !glConfig.multitextureAvailable || !glConfig.textureEnvCombineAvailable || !glConfig.cubeMapAvailable
-		|| !glConfig.envDot3Available ) {
-			common->Error( common->GetLanguageDict()->GetString( "#str_06780" ) );
+		qglGetAttribLocation = (GLint (APIENTRY *)(GLuint programObj, const GLchar *name))GLimp_ExtensionPointer( "glGetAttribLocation" );
+    qglBindAttribLocation = (void (APIENTRY *)(GLuint programObj, GLuint index, const GLchar *name))GLimp_ExtensionPointer( "glBindAttribLocation" );
+    qglBindFragDataLocation = (void (APIENTRY *)(GLuint programObj, GLuint index, const GLchar *name))GLimp_ExtensionPointer( "glBindFragDataLocation" );
 	}
 
 	// GL_EXT_depth_bounds_test
@@ -498,51 +441,49 @@ static void R_CheckPortableExtensions( void ) {
 	// GL_ARB_shading_language_100
 	glConfig.GLSLAvailable = R_CheckExtension( "GL_ARB_shading_language_100" );
 	if (glConfig.GLSLAvailable) {
-		qglDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC)GLimp_ExtensionPointer( "glDeleteObjectARB" );
-		qglGetHandleARB = (PFNGLGETHANDLEARBPROC)GLimp_ExtensionPointer( "glGetHandleARB" );
-		qglDetachObjectARB = (PFNGLDETACHOBJECTARBPROC)GLimp_ExtensionPointer( "glDetachObjectARB" );
-		qglCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)GLimp_ExtensionPointer( "glCreateShaderObjectARB" );
-		qglShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)GLimp_ExtensionPointer( "glShaderSourceARB" );
-		qglCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)GLimp_ExtensionPointer( "glCompileShaderARB" );
-		qglCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC)GLimp_ExtensionPointer( "glCreateProgramObjectARB" );
-		qglAttachObjectARB = (PFNGLATTACHOBJECTARBPROC)GLimp_ExtensionPointer( "glAttachObjectARB" );
-		qglLinkProgramARB = (PFNGLLINKPROGRAMARBPROC)GLimp_ExtensionPointer( "glLinkProgramARB" );
-		qglUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC)GLimp_ExtensionPointer( "glUseProgramObjectARB" );
-		qglValidateProgramARB = (PFNGLVALIDATEPROGRAMARBPROC)GLimp_ExtensionPointer( "glValidateProgramARB" );
-		qglUniform1fARB = (PFNGLUNIFORM1FARBPROC)GLimp_ExtensionPointer( "glUniform1fARB" );
-		qglUniform2fARB = (PFNGLUNIFORM2FARBPROC)GLimp_ExtensionPointer( "glUniform2fARB" );
-		qglUniform3fARB = (PFNGLUNIFORM3FARBPROC)GLimp_ExtensionPointer( "glUniform3fARB" );
-		qglUniform4fARB = (PFNGLUNIFORM4FARBPROC)GLimp_ExtensionPointer( "glUniform4fARB" );
-		qglUniform1iARB = (PFNGLUNIFORM1IARBPROC)GLimp_ExtensionPointer( "glUniform1iARB" );
-		qglUniform2iARB = (PFNGLUNIFORM2IARBPROC)GLimp_ExtensionPointer( "glUniform2iARB" );
-		qglUniform3iARB = (PFNGLUNIFORM3IARBPROC)GLimp_ExtensionPointer( "glUniform3iARB" );
-		qglUniform4iARB = (PFNGLUNIFORM4IARBPROC)GLimp_ExtensionPointer( "glUniform4iARB" );
-		qglUniform2fvARB = (PFNGLUNIFORM2FVARBPROC)GLimp_ExtensionPointer( "glUniform2fvARB" );
-		qglUniform3fvARB = (PFNGLUNIFORM3FVARBPROC)GLimp_ExtensionPointer( "glUniform3fvARB" );
-		qglUniform4fvARB = (PFNGLUNIFORM4FVARBPROC)GLimp_ExtensionPointer( "glUniform4fvARB" );
-		qglUniform2ivARB = (PFNGLUNIFORM2IVARBPROC)GLimp_ExtensionPointer( "glUniform2ivARB" );
-		qglUniform3ivARB = (PFNGLUNIFORM3IVARBPROC)GLimp_ExtensionPointer( "glUniform3ivARB" );
-		qglUniform4ivARB = (PFNGLUNIFORM4IVARBPROC)GLimp_ExtensionPointer( "glUniform4ivARB" );
-		qglUniformMatrix2fvARB = (PFNGLUNIFORMMATRIX2FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix2fvARB" );
-		qglUniformMatrix3fvARB = (PFNGLUNIFORMMATRIX3FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix3fvARB" );
-		qglUniformMatrix4fvARB = (PFNGLUNIFORMMATRIX4FVARBPROC)GLimp_ExtensionPointer( "glUniformMatrix4fvARB" );
-		qglGetObjectParameterfvARB = (PFNGLGETOBJECTPARAMETERFVARBPROC)GLimp_ExtensionPointer( "glGetObjectParameterfvARB" );
-		qglGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)GLimp_ExtensionPointer( "glGetObjectParameterivARB" );
-		qglGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)GLimp_ExtensionPointer( "glGetInfoLogARB" );
-		qglGetAttachedObjectsARB = (PFNGLGETATTACHEDOBJECTSARBPROC)GLimp_ExtensionPointer( "glGetAttachedObjectsARB" );
-		qglGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)GLimp_ExtensionPointer( "glGetUniformLocationARB" );
-		qglGetActiveUniformARB = (PFNGLGETACTIVEUNIFORMARBPROC)GLimp_ExtensionPointer( "glGetActiveUniformARB" );
-		qglGetUniformfvARB = (PFNGLGETUNIFORMFVARBPROC)GLimp_ExtensionPointer( "glGetUniformfvARB" );
-		qglGetUniformivARB = (PFNGLGETUNIFORMIVARBPROC)GLimp_ExtensionPointer( "glGetUniformivARB" );
-		qglGetShaderSourceARB = (PFNGLGETSHADERSOURCEARBPROC)GLimp_ExtensionPointer( "glGetShaderSourceARB" );
-		qglBindAttribLocationARB = (PFNGLBINDATTRIBLOCATIONARBPROC)GLimp_ExtensionPointer( "glBindAttribLocationARB" );
-		qglGetActiveAttribARB = (PFNGLGETACTIVEATTRIBARBPROC)GLimp_ExtensionPointer( "glGetActiveAttribARB" );
-		qglGetAttribLocationARB = (PFNGLGETATTRIBLOCATIONARBPROC)GLimp_ExtensionPointer( "glGetAttribLocationARB" );
-		qglGetShaderiv = (void ( APIENTRY * )(GLuint shader, GLenum pname, GLint* param))GLimp_ExtensionPointer( "glGetShaderiv" );
-		qglDeleteShader = (void ( APIENTRY * )(GLuint shader))GLimp_ExtensionPointer( "glDeleteShader" );
-		qglGetShaderInfoLog = (void ( APIENTRY * )(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* infoLog))GLimp_ExtensionPointer( "glGetShaderInfoLog" );
+		qglDeleteShader = (void (APIENTRY *)(GLuint obj))GLimp_ExtensionPointer( "glDeleteShader" );
+		qglDeleteProgram = (void (APIENTRY *)(GLuint obj))GLimp_ExtensionPointer( "glDeleteProgram" );
+		qglDetachShader = (void (APIENTRY *)(GLuint containerObj, GLuint attachedObj))GLimp_ExtensionPointer( "glDetachShader" );
+		qglCreateShader = (GLuint (APIENTRY *)(GLenum shaderType))GLimp_ExtensionPointer( "glCreateShader" );
+		qglShaderSource = (void (APIENTRY *)(GLuint shaderObj, GLsizei count, const GLchar **string, const GLint *length))GLimp_ExtensionPointer( "glShaderSource" );
+		qglCompileShader = (void (APIENTRY *)(GLuint shaderObj))GLimp_ExtensionPointer( "glCompileShader" );
+		qglCreateProgram = (GLuint (APIENTRY *)(void))GLimp_ExtensionPointer( "glCreateProgram" );
+		qglAttachShader = (void (APIENTRY *)(GLuint containerObj, GLuint obj))GLimp_ExtensionPointer( "glAttachShader" );
+		qglLinkProgram = (void (APIENTRY *)(GLuint programObj))GLimp_ExtensionPointer( "glLinkProgram" );
+		qglUseProgram = (void (APIENTRY *)(GLuint programObj))GLimp_ExtensionPointer( "glUseProgram" );
+		qglValidateProgram = (void (APIENTRY *)(GLuint programObj))GLimp_ExtensionPointer( "glValidateProgram" );
+		qglUniform1f = (void (APIENTRY *)(GLint location, GLfloat v0))GLimp_ExtensionPointer( "glUniform1f" );
+		qglUniform2f = (void (APIENTRY *)(GLint location, GLfloat v0, GLfloat v1))GLimp_ExtensionPointer( "glUniform2f" );
+		qglUniform3f = (void (APIENTRY *)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2))GLimp_ExtensionPointer( "glUniform3f" );
+		qglUniform4f = (void (APIENTRY *)(GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3))GLimp_ExtensionPointer( "glUniform4f" );
+		qglUniform1i = (void (APIENTRY *)(GLint location, GLint v0))GLimp_ExtensionPointer( "glUniform1i" );
+		qglUniform2i = (void (APIENTRY *)(GLint location, GLint v0, GLint v1))GLimp_ExtensionPointer( "glUniform2i" );
+		qglUniform3i = (void (APIENTRY *)(GLint location, GLint v0, GLint v1, GLint v2))GLimp_ExtensionPointer( "glUniform3i" );
+		qglUniform4i = (void (APIENTRY *)(GLint location, GLint v0, GLint v1, GLint v2, GLint v3))GLimp_ExtensionPointer( "glUniform4i" );
+		qglUniform2fv = (void (APIENTRY *)(GLint location, GLsizei count, const GLfloat *value))GLimp_ExtensionPointer( "glUniform2fv" );
+		qglUniform3fv = (void (APIENTRY *)(GLint location, GLsizei count, const GLfloat *value))GLimp_ExtensionPointer( "glUniform3fv" );
+		qglUniform4fv = (void (APIENTRY *)(GLint location, GLsizei count, const GLfloat *value))GLimp_ExtensionPointer( "glUniform4fv" );
+		qglUniform2iv = (void (APIENTRY *)(GLint location, GLsizei count, const GLint *value))GLimp_ExtensionPointer( "glUniform2iv" );
+		qglUniform3iv = (void (APIENTRY *)(GLint location, GLsizei count, const GLint *value))GLimp_ExtensionPointer( "glUniform3iv" );
+		qglUniform4iv = (void (APIENTRY *)(GLint location, GLsizei count, const GLint *value))GLimp_ExtensionPointer( "glUniform4iv" );
+		qglUniformMatrix2fv = (void (APIENTRY *)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value))GLimp_ExtensionPointer( "glUniformMatrix2fv" );
+		qglUniformMatrix3fv = (void (APIENTRY *)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value))GLimp_ExtensionPointer( "glUniformMatrix3fv" );
+		qglUniformMatrix4fv = (void (APIENTRY *)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value))GLimp_ExtensionPointer( "glUniformMatrix4fv" );
+		qglGetShaderiv = (void (APIENTRY *)(GLuint obj, GLenum pname, GLint *params))GLimp_ExtensionPointer( "glGetShaderiv" );
+		qglGetProgramiv = (void (APIENTRY *)(GLuint obj, GLenum pname, GLint *params))GLimp_ExtensionPointer( "glGetProgramiv" );
+		qglGetShaderInfoLog = (void (APIENTRY *)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *infoLog))GLimp_ExtensionPointer( "glGetShaderInfoLog" );
+		qglGetProgramInfoLog = (void (APIENTRY *)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *infoLog))GLimp_ExtensionPointer( "glGetProgramInfoLog" );
+		qglGetAttachedShaders = (void (APIENTRY *)(GLuint containerObj, GLsizei maxCount, GLsizei *count, GLuint *obj))GLimp_ExtensionPointer( "glGetAttachedShaders" );
+		qglGetUniformLocation = (GLint (APIENTRY *)(GLuint programObj, const GLchar *name))GLimp_ExtensionPointer( "glGetUniformLocation" );
+		qglGetActiveUniform = (void (APIENTRY *)(GLuint programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLchar *name))GLimp_ExtensionPointer( "glGetActiveUniform" );
+		qglGetUniformfv = (void (APIENTRY *)(GLuint programObj, GLint location, GLfloat *params))GLimp_ExtensionPointer( "glGetUniformfv" );
+		qglGetUniformiv = (void (APIENTRY *)(GLuint programObj, GLint location, GLint *params))GLimp_ExtensionPointer( "glGetUniformiv" );
+		qglGetShaderSource = (void (APIENTRY *)(GLuint obj, GLsizei maxLength, GLsizei *length, GLchar *source))GLimp_ExtensionPointer( "glGetShaderSource" );
  	}
-
+	// check for minimum set
+  if ( !glConfig.multitextureAvailable || !glConfig.cubeMapAvailable || !glConfig.GLSLAvailable || !glConfig.ARBVertexProgramAvailable ) {
+    common->Error( common->GetLanguageDict()->GetString( "#str_06780" ) );
+  }
 }
 
 /*
@@ -741,28 +682,15 @@ void R_InitOpenGL( void ) {
 
 	glConfig.isInitialized = true;
 
-	common->Printf("OpenGL vendor: %s\n", glConfig.vendor_string );
-	common->Printf("OpenGL renderer: %s\n", glConfig.renderer_string );
-	common->Printf("OpenGL version: %s\n", glConfig.version_string );
+	// recheck all the extensions
+ 	R_CheckPortableExtensions();
 
-	// recheck all the extensions (FIXME: this might be dangerous)
-	R_CheckPortableExtensions();
-
-	// parse our vertex and fragment programs, possibly disably support for
-	// one of the paths if there was an error
-	R_ARB2_Init();
-	R_GLSL_Init();
-
-	cmdSystem->AddCommand( "reloadARBprograms", R_ReloadARBPrograms_f, CMD_FL_RENDERER, "reloads ARB programs" );
-	cmdSystem->AddCommand( "reloadGLSLshaders", R_ReloadGLSLShaders_f, CMD_FL_RENDERER, "reloads GLSL shader programs" );
-	R_ReloadARBPrograms_f( idCmdArgs() );
+	// parse our vertex and fragment shaders
+	cmdSystem->AddCommand( "reloadGLSLprograms", R_ReloadGLSLPrograms_f, CMD_FL_RENDERER, "reloads GLSL shader programs" );
+	R_ReloadGLSLPrograms_f( idCmdArgs() );
 
 	// allocate the vertex array range or vertex objects
 	vertexCache.Init();
-
-	// select which renderSystem we are going to use
-	r_renderer.SetModified();
-	tr.SetBackEndRenderer();
 
 	// allocate the frame data, which may be more if smp is enabled
 	R_InitFrameData();
@@ -1854,19 +1782,6 @@ static void GfxInfo_f( const idCmdArgs &args ) {
 		common->Printf( "N/A\n" );
 	}
 
-	const char *active[2] = { "", " (ACTIVE)" };
-
-	if ( glConfig.allowARB2Path ) {
-		common->Printf( "ARB2 path ENABLED%s\n", active[tr.backEndRenderer == BE_ARB2] );
-	} else {
-		common->Printf( "ARB2 path disabled\n" );
-	}
-
-	if ( glConfig.allowGLSLPath ) {
-		common->Printf( "GLSL path ENABLED%s\n", active[tr.backEndRenderer == BE_GLSL] );
-	} else {
-		common->Printf( "GLSL path disabled\n" );
-	}
 
 	if ( r_finish.GetBool() ) {
 		common->Printf( "Forcing glFinish\n" );
@@ -1874,14 +1789,10 @@ static void GfxInfo_f( const idCmdArgs &args ) {
 		common->Printf( "glFinish not forced\n" );
 	}
 
-	bool tss = glConfig.twoSidedStencilAvailable;
-
-	if ( !r_useTwoSidedStencil.GetBool() && glConfig.twoSidedStencilAvailable ) {
-		common->Printf( "Two sided stencil available but disabled\n" );
-	} else if ( !glConfig.twoSidedStencilAvailable ) {
+	if ( glConfig.twoSidedStencilAvailable ) {
+		common->Printf( "Two sided stencil available\n" );
+	} else {
 		common->Printf( "Two sided stencil not available\n" );
-	} else if ( glConfig.twoSidedStencilAvailable ) {
-		common->Printf( "Using two sided stencil\n" );
 	}
 
 	if ( vertexCache.IsFast() ) {
@@ -2111,10 +2022,7 @@ void idRenderSystemLocal::Clear( void ) {
 	viewportOffset[1] = 0;
 	tiledViewport[0] = 0;
 	tiledViewport[1] = 0;
-	backEndRenderer = BE_BAD;
-	backEndRendererHasVertexPrograms = false;
-	backEndRendererMaxLight = 1.0f;
-	ambientLightVector.Zero();
+	backEndRendererMaxLight = 999;
 	sortOffset = 0;
 	worlds.Clear();
 	primaryWorld = NULL;
@@ -2147,11 +2055,6 @@ void idRenderSystemLocal::Init( void ) {
 	viewCount = 1;		// so cleared structures never match viewCount
 	// we used to memset tr, but now that it is a class, we can't, so
 	// there may be other state we need to reset
-
-	ambientLightVector[0] = 0.5f;
-	ambientLightVector[1] = 0.5f - 0.385f;
-	ambientLightVector[2] = 0.8925f;
-	ambientLightVector[3] = 1.0f;
 
 	memset( &backEnd, 0, sizeof( backEnd ) );
 
