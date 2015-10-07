@@ -189,6 +189,7 @@ static void R_InvertColor( byte *data, int width, int height ) {
 /*
 ===================
 R_AddNormalMaps
+
 ===================
 */
 static void R_AddNormalMaps( byte *data1, int width1, int height1, byte *data2, int width2, int height2 ) {
@@ -296,6 +297,7 @@ static void R_SmoothNormalMap( byte *data, int width, int height ) {
 /*
 ===================
 R_ImageAdd
+
 ===================
 */
 static void R_ImageAdd( byte *data1, int width1, int height1, byte *data2, int width2, int height2 ) {
@@ -310,6 +312,7 @@ static void R_ImageAdd( byte *data1, int width1, int height1, byte *data2, int w
 	} else {
 		newMap = NULL;
 	}
+
 
 	c = width1 * height1 * 4;
 

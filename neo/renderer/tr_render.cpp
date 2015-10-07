@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 /*
 
-back end scene + lights rendering functions
+  back end scene + lights rendering functions
 
 */
 
@@ -356,48 +356,6 @@ void RB_GetShaderTextureMatrix( const float *shaderRegisters,
 }
 
 /*
-=====================
-RB_BakeTextureMatrixIntoTexgen
-=====================
-*/
-void RB_BakeTextureMatrixIntoTexgen( idPlane lightProject[3], const float *textureMatrix ) {
-    float	genMatrix[16];
-    float	final[16];
-
-    genMatrix[0] = lightProject[0][0];
-    genMatrix[4] = lightProject[0][1];
-    genMatrix[8] = lightProject[0][2];
-    genMatrix[12] = lightProject[0][3];
-
-    genMatrix[1] = lightProject[1][0];
-    genMatrix[5] = lightProject[1][1];
-    genMatrix[9] = lightProject[1][2];
-    genMatrix[13] = lightProject[1][3];
-
-    genMatrix[2] = 0;
-    genMatrix[6] = 0;
-    genMatrix[10] = 0;
-    genMatrix[14] = 0;
-
-    genMatrix[3] = lightProject[2][0];
-    genMatrix[7] = lightProject[2][1];
-    genMatrix[11] = lightProject[2][2];
-    genMatrix[15] = lightProject[2][3];
-
-    myGlMultMatrix( genMatrix, backEnd.lightTextureMatrix, final );
-
-    lightProject[0][0] = final[0];
-    lightProject[0][1] = final[4];
-    lightProject[0][2] = final[8];
-    lightProject[0][3] = final[12];
-
-    lightProject[1][0] = final[1];
-    lightProject[1][1] = final[5];
-    lightProject[1][2] = final[9];
-    lightProject[1][3] = final[13];
-}
-
-/*
 ======================
 RB_LoadShaderTextureMatrix
 ======================
@@ -523,6 +481,70 @@ void RB_FinishStageTexture( const textureStage_t *texture, const drawSurf_t *sur
 
 //=============================================================================================
 
+
+/*
+=================
+RB_DetermineLightScale
+
+Sets:
+backEnd.lightScale
+backEnd.overBright
+
+Find out how much we are going to need to overscale the lighting, so we
+can down modulate the pre-lighting passes.
+
+We only look at light calculations, but an argument could be made that
+we should also look at surface evaluations, which would let surfaces
+overbright past 1.0
+=================
+*/
+void RB_DetermineLightScale( void ) {
+	viewLight_t			*vLight;
+	const idMaterial	*shader;
+	float				max;
+	int					i, j, numStages;
+	const shaderStage_t	*stage;
+
+	// the light scale will be based on the largest color component of any surface
+	// that will be drawn.
+	// should we consider separating rgb scales?
+
+	// if there are no lights, this will remain at 1.0, so GUI-only
+	// rendering will not lose any bits of precision
+	max = 1.0;
+
+	for ( vLight = backEnd.viewDef->viewLights ; vLight ; vLight = vLight->next ) {
+		// lights with no surfaces or shaderparms may still be present
+		// for debug display
+		if ( !vLight->localInteractions && !vLight->globalInteractions
+			&& !vLight->translucentInteractions ) {
+			continue;
+		}
+
+		shader = vLight->lightShader;
+		numStages = shader->GetNumStages();
+		for ( i = 0 ; i < numStages ; i++ ) {
+			stage = shader->GetStage( i );
+			for ( j = 0 ; j < 3 ; j++ ) {
+				float	v = r_lightScale.GetFloat() * vLight->shaderRegisters[ stage->color.registers[j] ];
+				if ( v > max ) {
+					max = v;
+				}
+			}
+		}
+	}
+
+	backEnd.pc.maxLightValue = max;
+	if ( max <= tr.backEndRendererMaxLight ) {
+		backEnd.lightScale = r_lightScale.GetFloat();
+		backEnd.overBright = 1.0;
+	} else {
+		backEnd.lightScale = r_lightScale.GetFloat() * tr.backEndRendererMaxLight / max;
+		backEnd.overBright = max / tr.backEndRendererMaxLight;
+	}
+}
+
+
 /*
 =================
 RB_BeginDrawingView
@@ -531,7 +553,7 @@ Any mirrored or portaled views have already been drawn, so prepare
 to actually render the visible surfaces for this view
 =================
 */
-void RB_BeginDrawingView ( void ) {
+void RB_BeginDrawingView (void) {
 	// set the modelview matrix for the viewer
 	qglMatrixMode(GL_PROJECTION);
 	qglLoadMatrixf( backEnd.viewDef->projectionMatrix );
@@ -741,9 +763,11 @@ void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInterac
 
 		float lightColor[4];
 
-		lightColor[0] = r_lightScale.GetFloat() * lightRegs[ lightStage->color.registers[0] ];
-		lightColor[1] = r_lightScale.GetFloat() * lightRegs[ lightStage->color.registers[1] ];
-		lightColor[2] = r_lightScale.GetFloat() * lightRegs[ lightStage->color.registers[2] ];
+		// backEnd.lightScale is calculated so that lightColor[] will never exceed
+		// tr.backEndRendererMaxLight
+		lightColor[0] = backEnd.lightScale * lightRegs[ lightStage->color.registers[0] ];
+		lightColor[1] = backEnd.lightScale * lightRegs[ lightStage->color.registers[1] ];
+		lightColor[2] = backEnd.lightScale * lightRegs[ lightStage->color.registers[2] ];
 		lightColor[3] = lightRegs[ lightStage->color.registers[3] ];
 
 		// go through the individual stages

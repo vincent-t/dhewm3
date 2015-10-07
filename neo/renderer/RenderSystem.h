@@ -65,20 +65,28 @@ typedef struct glconfig_s {
 	bool				textureCompressionAvailable;
 	bool				anisotropicAvailable;
 	bool				textureLODBiasAvailable;
+	bool				textureEnvAddAvailable;
+	bool				textureEnvCombineAvailable;
+	bool				registerCombinersAvailable;
 	bool				cubeMapAvailable;
-	bool        ARBMapBufferRangeAvailable;
+	bool				envDot3Available;
+	bool				texture3DAvailable;
+	bool				sharedTexturePaletteAvailable;
 	bool				ARBVertexBufferObjectAvailable;
 	bool				ARBVertexProgramAvailable;
+	bool				ARBFragmentProgramAvailable;
 	bool				twoSidedStencilAvailable;
 	bool				textureNonPowerOfTwoAvailable;
 	bool				depthBoundsTestAvailable;
-	bool				GLSLAvailable;
 
 	int					vidWidth, vidHeight;	// passed to R_BeginFrame
 
 	int					displayFrequency;
 
 	bool				isFullscreen;
+
+	bool				allowARB2Path;
+
 	bool				isInitialized;
 } glconfig_t;
 

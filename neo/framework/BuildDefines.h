@@ -75,9 +75,7 @@ If you have questions concerning this license or the applicable additional terms
 	#define	ID_ALLOW_TOOLS
 #endif
 
-// disable cd-key check
-//#define ID_ENFORCE_KEY_CLIENT 0
-#define ID_ENFORCE_KEY 0
+#define ID_ENFORCE_KEY_CLIENT 0
 
 #ifndef ID_ENFORCE_KEY
 #	if !defined( ID_DEDICATED )
@@ -94,7 +92,6 @@ If you have questions concerning this license or the applicable additional terms
 #		define ID_ENFORCE_KEY_CLIENT 0
 #	endif
 #endif
-
 
 // async network
 

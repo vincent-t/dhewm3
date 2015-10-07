@@ -89,6 +89,9 @@ void RB_SetDefaultGLState( void ) {
 
 		GL_TexEnv( GL_MODULATE );
 		qglDisable( GL_TEXTURE_2D );
+		if ( glConfig.texture3DAvailable ) {
+			qglDisable( GL_TEXTURE_3D );
+		}
 		if ( glConfig.cubeMapAvailable ) {
 			qglDisable( GL_TEXTURE_CUBE_MAP_EXT );
 		}
@@ -100,23 +103,7 @@ void RB_SetDefaultGLState( void ) {
 
 //=============================================================================
 
-/*
-==================
-GL_BindProgram
-==================
-*/
-void GL_BindProgram( shaderProgram_t *program ) {
-	if ( !program ) {
-		backEnd.glState.program = 0;
 
-    qglUseProgram( 0 );
-    return;
-	}
-
-  backEnd.glState.program = *((unsigned int*)(&program));
-
-  qglUseProgram( program->program );
-}
 
 /*
 ====================

@@ -138,7 +138,9 @@ typedef enum {
 typedef enum {
 	TT_DISABLED,
 	TT_2D,
-	TT_CUBIC
+	TT_3D,
+	TT_CUBIC,
+	TT_RECT
 } textureType_t;
 
 typedef enum {
@@ -172,6 +174,9 @@ public:
 	void		GenerateImage( const byte *pic, int width, int height,
 					   textureFilter_t filter, bool allowDownSize,
 					   textureRepeat_t repeat, textureDepth_t depth );
+	void		Generate3DImage( const byte *pic, int width, int height, int depth,
+						textureFilter_t filter, bool allowDownSize,
+						textureRepeat_t repeat, textureDepth_t minDepth );
 	void		GenerateCubeImage( const byte *pic[6], int size,
 						textureFilter_t filter, bool allowDownSize,
 						textureDepth_t depth );
@@ -209,7 +214,8 @@ public:
 	void		StartBackgroundImageLoad();
 	int			BitsForInternalFormat( int internalFormat ) const;
 	void		UploadCompressedNormalMap( int width, int height, const byte *rgba, int mipLevel );
-	GLenum	SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, int width, int height, textureDepth_t minimumDepth ) const;
+	GLenum		SelectInternalFormat( const byte **dataPtrs, int numDataPtrs, int width, int height,
+									 textureDepth_t minimumDepth ) const;
 	void		ImageProgramStringToCompressedFileName( const char *imageProg, char *fileName ) const;
 	int			NumLevelsForImageSize( int width, int height ) const;
 
@@ -240,8 +246,7 @@ public:
 	bool				levelLoadReferenced;	// for determining if it needs to be purged
 	bool				precompressedFile;		// true when it was loaded from a .d3t file
 	bool				defaulted;				// true if the default image was generated because a file couldn't be loaded
-
-	ID_TIME_T		timestamp;				// the most recent of all images used in creation, for reloadImages command
+	ID_TIME_T				timestamp;				// the most recent of all images used in creation, for reloadImages command
 
 	int					imageHash;				// for identical-image checking
 
@@ -392,11 +397,13 @@ public:
 	// built-in images
 	idImage *			defaultImage;
 	idImage *			flatNormalMap;				// 128 128 255 in all pixels
+	idImage *			ambientNormalMap;			// tr.ambientLightVector encoded in all pixels
 	idImage *			rampImage;					// 0-255 in RGBA in S
 	idImage *			alphaRampImage;				// 0-255 in alpha, 255 in RGB
 	idImage *			alphaNotchImage;			// 2x1 texture with just 1110 and 1111 with point sampling
 	idImage *			whiteImage;					// full of 0xff
 	idImage *			blackImage;					// full of 0x00
+	idImage *			normalCubeMapImage;			// cube map to normalize STR into RGB
 	idImage *			noFalloffImage;				// all 255, but zero clamped
 	idImage *			fogImage;					// increasing alpha is denser fog
 	idImage *			fogEnterImage;				// adjust fogImage alpha based on terminator plane
@@ -406,6 +413,8 @@ public:
 	idImage *			accumImage;
 	idImage *			currentRenderImage;			// for SS_POST_PROCESS shaders
 	idImage *			scratchCubeMapImage;
+	idImage *			specularTableImage;			// 1D intensity texture with our specular function
+	idImage *			specular2DTableImage;		// 2D intensity texture with our specular function with variable specularity
 	idImage *			borderClampImage;			// white inside, black outside
 
 	//--------------------------------------------------------
@@ -456,11 +465,13 @@ byte *R_Dropsample( const byte *in, int inwidth, int inheight,
 							int outwidth, int outheight );
 byte *R_ResampleTexture( const byte *in, int inwidth, int inheight,
 							int outwidth, int outheight );
-
+byte *R_MipMapWithAlphaSpecularity( const byte *in, int width, int height );
 byte *R_MipMap( const byte *in, int width, int height, bool preserveBorder );
+byte *R_MipMap3D( const byte *in, int width, int height, int depth, bool preserveBorder );
 
 // these operate in-place on the provided pixels
 void R_SetBorderTexels( byte *inBase, int width, int height, const byte border[4] );
+void R_SetBorderTexels3D( byte *inBase, int width, int height, int depth, const byte border[4] );
 void R_BlendOverTexture( byte *data, int pixelCount, const byte blend[4] );
 void R_HorizontalFlip( byte *data, int width, int height );
 void R_VerticalFlip( byte *data, int width, int height );

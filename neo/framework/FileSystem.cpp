@@ -3412,19 +3412,15 @@ int BackgroundDownloadThread( void *pexit ) {
 		Sys_LeaveCriticalSection();
 
 		bgl->next = NULL;
-		int ret = 0;
 
 		if ( bgl->opcode == DLTYPE_FILE ) {
 			// use the low level read function, because fread may allocate memory
 			#if defined(WIN32)
-				ret = _read( static_cast<idFile_Permanent*>(bgl->f)->GetFilePtr()->_file, bgl->file.buffer, bgl->file.length );
+				_read( static_cast<idFile_Permanent*>(bgl->f)->GetFilePtr()->_file, bgl->file.buffer, bgl->file.length );
 			#else
-				ret = fread(  bgl->file.buffer, bgl->file.length, 1, static_cast<idFile_Permanent*>(bgl->f)->GetFilePtr() );
+				fread(  bgl->file.buffer, bgl->file.length, 1, static_cast<idFile_Permanent*>(bgl->f)->GetFilePtr() );
 			#endif
-			if ( ret ) {
 			bgl->completed = true;
-			continue;
-			}
 		} else {
 #ifdef ID_ENABLE_CURL
 			// DLTYPE_URL

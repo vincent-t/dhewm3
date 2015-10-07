@@ -1,7 +1,4 @@
-/build*
+build
 *~
 .*.swp
 *.pyc
-.cproject
-.project
-.settings/

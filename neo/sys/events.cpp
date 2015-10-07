@@ -432,7 +432,7 @@ sysEvent_t Sys_GetEvent() {
 						// unset modifier, in case alt-tab was used to leave window and ALT is still set
 						// as that can cause fullscreen-toggling when pressing enter...
 						SDL_Keymod currentmod = SDL_GetModState();
-
+					
 						int newmod = KMOD_NONE;
 						if (currentmod & KMOD_CAPS) // preserve capslock
 							newmod |= KMOD_CAPS;
@@ -544,10 +544,6 @@ sysEvent_t Sys_GetEvent() {
 			}
 
 			continue; // handle next event
-
-			case SDL_TEXTEDITING:
-			// on windows we get this event whenever the window gains focus.. just ignore it.
-			continue;
 #endif
 
 		case SDL_MOUSEMOTION:
@@ -629,7 +625,7 @@ sysEvent_t Sys_GetEvent() {
 				continue; // handle next event
 			}
 		default:
-			common->Warning("unknown SDL event 0x%x", ev.type);
+			common->Warning("unknown event %u", ev.type);
 			continue; // handle next event
 		}
 	}

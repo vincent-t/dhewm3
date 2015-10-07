@@ -2148,9 +2148,7 @@ idSessionLocal::ProcessEvent
 */
 bool idSessionLocal::ProcessEvent( const sysEvent_t *event ) {
 	// hitting escape anywhere brings up the menu
-	// DG: but shift-escape should bring up console instead so ignore that
-	if ( !guiActive && event->evType == SE_KEY && event->evValue2 == 1
-			&& event->evValue == K_ESCAPE && !idKeyInput::IsDown( K_SHIFT ) ) {
+	if ( !guiActive && event->evType == SE_KEY && event->evValue2 == 1 && event->evValue == K_ESCAPE ) {
 		console->Close();
 		if ( game ) {
 			idUserInterface	*gui = NULL;
